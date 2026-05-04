@@ -211,5 +211,29 @@
 			"type": "jakarta.servlet.http.HttpServlet",
 			"contentType": "class"
 		}
+	},
+	"Jakarta Servlet - DataSourceDefinition": {
+		"prefix": "servlet_datasource_definition",
+		"body": [
+			"package ${1:packagename};",
+			"",
+			"import jakarta.annotation.sql.DataSourceDefinition;",
+			"",
+			"@DataSourceDefinition(",
+			"\tname = \"java:app/jdbc/${2:MyDS}\",",
+			"\tclassName = \"${3:org.h2.Driver}\",",
+			"\turl = \"${4:jdbc:h2:mem:test;DB_CLOSE_DELAY=-1}\",",
+			"\tuser = \"${5:sa}\",",
+			"\tpassword = \"${6:secret}\"",
+			")",
+			"public class ${TM_FILENAME_BASE} {",
+			"\t// This class is used only for declaring the DataSource",
+			"}"
+		],
+		"description": "Define a DataSource using @DataSourceDefinition annotation",
+		"context": {
+			"type": "jakarta.annotation.sql.DataSourceDefinition",
+			"contentType": "class"
+		}
 	}
 }
