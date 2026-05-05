@@ -108,8 +108,6 @@
 	"Jakarta Persistence - named query annotation": {
 	    "prefix": "persist_named_query",
 	    "body": [
-			"// The @NamedQuery annotation defines a reusable JPQL query that can be referenced by name",
-			"// throughout the application, promoting query reuse and maintainability.",
 	        "@NamedQuery(",
 	        "\tname = \"${TM_FILENAME_BASE}.${1:findAll}\",",
 	        "\tquery = \"SELECT ${2:e} FROM ${TM_FILENAME_BASE} ${2:e}\"",
