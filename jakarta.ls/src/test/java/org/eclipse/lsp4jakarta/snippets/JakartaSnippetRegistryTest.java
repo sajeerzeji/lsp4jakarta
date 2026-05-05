@@ -79,7 +79,8 @@ public class JakartaSnippetRegistryTest {
 
     /**
      * Jakarta Persistence snippets. - persist_context, persist_context_extended,
-     * persist_context_extended_unsync, persist_entity.
+     * persist_context_extended_unsync, persist_entity, persist_named_entitygraph,
+     * persist_entity_listener, persist_named_query.
      */
     @Test
     public void persistenceSnippetsTest() {
@@ -104,6 +105,9 @@ public class JakartaSnippetRegistryTest {
         Optional<Snippet> persistEntityListener = findByPrefix("persist_entity_listener", registry);
         assertTrue("persist_entity_listener Java snippet is not present in SnippetRegistry", persistEntityListener.isPresent());
 
+        Optional<Snippet> persistNamedQuerySnippet = findByPrefix("persist_named_query", registry);
+        assertTrue("persist_named_query Java snippet is not present in SnippetRegistry", persistNamedQuerySnippet.isPresent());
+
         snippetsContextTest(persistContextSnippet, "jakarta.persistence.PersistenceContextType",
                             JavaCursorContextKind.BEFORE_METHOD);
         snippetsContextTest(persistContextExtendedSnippet, "jakarta.persistence.PersistenceContextType",
@@ -113,6 +117,7 @@ public class JakartaSnippetRegistryTest {
         snippetsContextTest(persistEntitySnippet, "jakarta.persistence.Entity", JavaCursorContextKind.IN_EMPTY_FILE);
         snippetsContextTest(persistNamedEntityGraphSnippet, "jakarta.persistence.NamedEntityGraph", JavaCursorContextKind.BEFORE_CLASS);
         snippetsContextTest(persistEntityListener, "jakarta.persistence.EntityListeners", JavaCursorContextKind.IN_EMPTY_FILE);
+        snippetsContextTest(persistNamedQuerySnippet, "jakarta.persistence.NamedQuery", JavaCursorContextKind.BEFORE_CLASS);
 
     }
 
