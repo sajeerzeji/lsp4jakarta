@@ -64,18 +64,18 @@ public class SessionBeanConstructorTest extends BaseJakartaTest {
     }
 
     private void assertMissingPublicNoArgConstructor(String projectRelativePath, int endCharacter,
-            String insertedConstructor) throws Exception {
+                                                     String insertedConstructor) throws Exception {
         String uri = getJavaFileUri(projectRelativePath);
         JakartaJavaDiagnosticsParams diagnosticsParams = createDiagnosticsParams(uri);
 
-        Diagnostic d = d(5, 13, endCharacter,
+        Diagnostic d = d(9, 13, endCharacter,
                 "Session beans must have a public no-argument constructor.",
                 DiagnosticSeverity.Error, "jakarta-ejb", "MissingPublicNoArgConstructor");
 
         assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d);
 
         JakartaJavaCodeActionParams codeActionParams = createCodeActionParams(uri, d);
-        TextEdit te = te(7, 4, 7, 4, insertedConstructor);
+        TextEdit te = te(11, 4, 11, 4, insertedConstructor);
         CodeAction ca = ca(uri, "Add a default 'public' constructor to this class", d, te);
         assertJavaCodeAction(codeActionParams, IJDT_UTILS, ca);
     }
