@@ -68,23 +68,23 @@ public class SessionBeanConstructorTest extends BaseJakartaTest {
         String uri = getJavaFileUri(projectRelativePath);
         JakartaJavaDiagnosticsParams diagnosticsParams = createDiagnosticsParams(uri);
 
-        Diagnostic d = d(9, 13, endCharacter,
+        Diagnostic missingConstructorDiagnostic = d(9, 13, endCharacter,
                 "Session beans must have a public no-argument constructor.",
                 DiagnosticSeverity.Error, "jakarta-ejb", "MissingPublicNoArgConstructor");
 
-        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d);
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, missingConstructorDiagnostic);
 
-        JakartaJavaCodeActionParams codeActionParams = createCodeActionParams(uri, d);
-        TextEdit te = te(11, 4, 11, 4, insertedConstructor);
-        CodeAction ca = ca(uri, "Add a default 'public' constructor to this class", d, te);
-        assertJavaCodeAction(codeActionParams, IJDT_UTILS, ca);
+        JakartaJavaCodeActionParams codeActionParams = createCodeActionParams(uri, missingConstructorDiagnostic);
+        TextEdit insertConstructorEdit = te(11, 4, 11, 4, insertedConstructor);
+        CodeAction addConstructorAction = ca(uri, "Add a default 'public' constructor to this class", missingConstructorDiagnostic, insertConstructorEdit);
+        assertJavaCodeAction(codeActionParams, IJDT_UTILS, addConstructorAction);
     }
 
     private void assertNoDiagnostics(String projectRelativePath) throws Exception {
         assertJavaDiagnostics(createDiagnosticsParams(getJavaFileUri(projectRelativePath)), IJDT_UTILS);
     }
 
-    private JakartaJavaDiagnosticsParams createDiagnosticsParams(String uri) {
+    private JakartaJavaDiagnosticsParams createDiagnosti csParams(String uri) {
         JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
         diagnosticsParams.setUris(Arrays.asList(uri));
         return diagnosticsParams;
