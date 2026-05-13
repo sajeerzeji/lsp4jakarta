@@ -14,6 +14,7 @@ package org.eclipse.lsp4jakarta.jdt.core.java.diagnostics.helpers;
 
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.lsp4jakarta.jdt.internal.DiagnosticUtils;
 
@@ -28,13 +29,16 @@ public final class ConstructorInfoDiagnosticHelper {
     private boolean hasConstructor;
     private boolean hasValidPublicNoArgsConstructor;
     private boolean hasValidProtectedNoArgsConstructor;
+    private boolean hasParameterizedConstructor;
 
     private ConstructorInfoDiagnosticHelper(boolean hasConstructor,
                                             boolean hasValidPublicNoArgsConstructor,
-                                            boolean hasValidProtectedNoArgsConstructor) {
+                                            boolean hasValidProtectedNoArgsConstructor,
+                                            boolean hasParameterizedConstructor) {
         this.hasConstructor = hasConstructor;
         this.hasValidPublicNoArgsConstructor = hasValidPublicNoArgsConstructor;
         this.hasValidProtectedNoArgsConstructor = hasValidProtectedNoArgsConstructor;
+        this.hasParameterizedConstructor = hasParameterizedConstructor;
     }
 
     public boolean hasConstructor() {
@@ -49,11 +53,16 @@ public final class ConstructorInfoDiagnosticHelper {
         return hasValidProtectedNoArgsConstructor;
     }
 
+    public boolean hasParameterizedConstructor() {
+        return hasParameterizedConstructor;
+    }
+
     @Override
     public String toString() {
         return "ConstructorInfoDiagnosticHelper [hasConstructor=" + hasConstructor
                + ", hasValidPublicNoArgsConstructor=" + hasValidPublicNoArgsConstructor
-               + ", hasValidProtectedNoArgsConstructor=" + hasValidProtectedNoArgsConstructor + "]";
+               + ", hasValidProtectedNoArgsConstructor=" + hasValidProtectedNoArgsConstructor
+               + ", hasParameterizedConstructor=" + hasParameterizedConstructor + "]";
     }
 
     /**
@@ -67,6 +76,7 @@ public final class ConstructorInfoDiagnosticHelper {
         boolean isUserDefinedConstructor = false;
         boolean isPublicNoArgsConstructor = false;
         boolean isProtectedNoArgsConstructor = false;
+        boolean isParameterizedConstructor = false;
 
         if (DiagnosticUtils.isConstructorMethod(method)) {
             isUserDefinedConstructor = true; // Check explicit constructor declaration
@@ -80,9 +90,29 @@ public final class ConstructorInfoDiagnosticHelper {
                 if (Flags.isProtected(flags)) {
                     isProtectedNoArgsConstructor = true;
                 }
+            } else {
+                // Constructor with parameters
+                isParameterizedConstructor = true;
             }
         }
-        return new ConstructorInfoDiagnosticHelper(isUserDefinedConstructor, isPublicNoArgsConstructor, isProtectedNoArgsConstructor); // This ensures that the values don't get changed
+        return new ConstructorInfoDiagnosticHelper(isUserDefinedConstructor, isPublicNoArgsConstructor, isProtectedNoArgsConstructor, isParameterizedConstructor);
+    }
+
+    /**
+     * Analyzes all methods of a type to determine constructor information.
+     *
+     * @param type
+     * @return ConstructorInfoDiagnosticHelper
+     * @throws JavaModelException
+     */
+    public static ConstructorInfoDiagnosticHelper getConstructorInfo(IType type) throws JavaModelException {
+        ConstructorInfoDiagnosticHelper constructorInfo = ConstructorInfoDiagnosticHelper.initialize();
+
+        for (IMethod method : type.getMethods()) {
+            constructorInfo.mergeConstructorInfo(ConstructorInfoDiagnosticHelper.getConstructorInfo(method));
+        }
+
+        return constructorInfo;
     }
 
     /**
@@ -95,6 +125,7 @@ public final class ConstructorInfoDiagnosticHelper {
         this.hasConstructor = this.hasConstructor || calculatedValue.hasConstructor;
         this.hasValidPublicNoArgsConstructor = this.hasValidPublicNoArgsConstructor || calculatedValue.hasValidPublicNoArgsConstructor;
         this.hasValidProtectedNoArgsConstructor = this.hasValidProtectedNoArgsConstructor || calculatedValue.hasValidProtectedNoArgsConstructor;
+        this.hasParameterizedConstructor = this.hasParameterizedConstructor || calculatedValue.hasParameterizedConstructor;
         return this;
     }
 
@@ -104,6 +135,6 @@ public final class ConstructorInfoDiagnosticHelper {
      * @return
      */
     public static ConstructorInfoDiagnosticHelper initialize() {
-        return new ConstructorInfoDiagnosticHelper(false, false, false);
+        return new ConstructorInfoDiagnosticHelper(false, false, false, false);
     }
 }
