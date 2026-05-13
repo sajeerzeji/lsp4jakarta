@@ -28,6 +28,7 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
+import org.eclipse.lsp4jakarta.jdt.core.java.diagnostics.helpers.ConstructorInfoDiagnosticHelper;
 import org.eclipse.lsp4jakarta.jdt.core.JakartaCorePlugin;
 import org.eclipse.lsp4jakarta.jdt.internal.DiagnosticUtils;
 
@@ -282,12 +283,12 @@ public class ManagedBean {
      * @throws JavaModelException
      */
     public static boolean containsValidConstructor(IType type) throws JavaModelException {
+        ConstructorInfoDiagnosticHelper constructorInfo = ConstructorInfoDiagnosticHelper.getConstructorInfo(type);
+        if (constructorInfo.hasValidPublicNoArgsConstructor() || constructorInfo.hasValidProtectedNoArgsConstructor()) {
+            return true;
+        }
         List<IMethod> constructors = getConstructors(type);
-
         for (IMethod constructor : constructors) {
-            if (constructor.getNumberOfParameters() == 0) {
-                return true;
-            }
             IAnnotation injectAnnotation = constructor.getAnnotation(INJECT_ANNOTATION);
             if (injectAnnotation != null && injectAnnotation.exists()) {
                 return true;
