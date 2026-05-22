@@ -272,21 +272,23 @@ public class ManagedBean {
     }
 
     /**
-     * Returns true if the class represented by the input type object contains a default constructor or
-     * a constructor with the jakarta.inject.Inject annotation.
+     * Returns true if the class represented by the input type object contains a no-args constructor
+     * (with any access modifier) or a constructor with the jakarta.inject.Inject annotation.
      *
      * @param type The type object to check.
      *
-     * @return True if the class represented by the input type object contains a default constructor or
-     *         a constructor with the jakarta.inject.Inject annotation.
+     * @return True if the class represented by the input type object contains a no-args constructor
+     *         (regardless of access modifier) or a constructor with the jakarta.inject.Inject annotation.
      *
      * @throws JavaModelException
      */
     public static boolean containsValidConstructor(IType type) throws JavaModelException {
         ConstructorInfoDiagnosticHelper constructorInfo = ConstructorInfoDiagnosticHelper.getConstructorInfo(type);
-        if (constructorInfo.hasValidPublicNoArgsConstructor() || constructorInfo.hasValidProtectedNoArgsConstructor()) {
+        // Check for no-args constructor
+        if (constructorInfo.hasNoArgsConstructor()) {
             return true;
         }
+        // Check for @Inject annotated constructor
         List<IMethod> constructors = getConstructors(type);
         for (IMethod constructor : constructors) {
             IAnnotation injectAnnotation = constructor.getAnnotation(INJECT_ANNOTATION);

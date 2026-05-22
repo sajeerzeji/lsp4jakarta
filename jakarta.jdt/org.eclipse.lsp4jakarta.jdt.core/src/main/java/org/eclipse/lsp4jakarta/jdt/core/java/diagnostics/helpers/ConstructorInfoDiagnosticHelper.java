@@ -29,15 +29,18 @@ public final class ConstructorInfoDiagnosticHelper {
     private boolean hasConstructor;
     private boolean hasValidPublicNoArgsConstructor;
     private boolean hasValidProtectedNoArgsConstructor;
+    private boolean hasNoArgsConstructor;
     private boolean hasParameterizedConstructor;
 
     private ConstructorInfoDiagnosticHelper(boolean hasConstructor,
                                             boolean hasValidPublicNoArgsConstructor,
                                             boolean hasValidProtectedNoArgsConstructor,
+                                            boolean hasNoArgsConstructor,
                                             boolean hasParameterizedConstructor) {
         this.hasConstructor = hasConstructor;
         this.hasValidPublicNoArgsConstructor = hasValidPublicNoArgsConstructor;
         this.hasValidProtectedNoArgsConstructor = hasValidProtectedNoArgsConstructor;
+        this.hasNoArgsConstructor = hasNoArgsConstructor;
         this.hasParameterizedConstructor = hasParameterizedConstructor;
     }
 
@@ -53,6 +56,16 @@ public final class ConstructorInfoDiagnosticHelper {
         return hasValidProtectedNoArgsConstructor;
     }
 
+    /**
+     * Returns true if the type has a no-args constructor with any access modifier
+     * (public, protected, package-private, or private).
+     *
+     * @return true if a no-args constructor exists regardless of access modifier
+     */
+    public boolean hasNoArgsConstructor() {
+        return hasNoArgsConstructor;
+    }
+
     public boolean hasParameterizedConstructor() {
         return hasParameterizedConstructor;
     }
@@ -62,6 +75,7 @@ public final class ConstructorInfoDiagnosticHelper {
         return "ConstructorInfoDiagnosticHelper [hasConstructor=" + hasConstructor
                + ", hasValidPublicNoArgsConstructor=" + hasValidPublicNoArgsConstructor
                + ", hasValidProtectedNoArgsConstructor=" + hasValidProtectedNoArgsConstructor
+               + ", hasNoArgsConstructor=" + hasNoArgsConstructor
                + ", hasParameterizedConstructor=" + hasParameterizedConstructor + "]";
     }
 
@@ -76,6 +90,7 @@ public final class ConstructorInfoDiagnosticHelper {
         boolean isUserDefinedConstructor = false;
         boolean isPublicNoArgsConstructor = false;
         boolean isProtectedNoArgsConstructor = false;
+        boolean isNoArgsConstructor = false;
         boolean isParameterizedConstructor = false;
 
         if (DiagnosticUtils.isConstructorMethod(method)) {
@@ -84,6 +99,7 @@ public final class ConstructorInfoDiagnosticHelper {
             int flags = method.getFlags();
 
             if (params.length == 0) { // User-defined no-args constructor
+                isNoArgsConstructor = true; // Any no-args constructor regardless of access modifier
                 if (Flags.isPublic(flags)) {
                     isPublicNoArgsConstructor = true;
                 }
@@ -95,7 +111,7 @@ public final class ConstructorInfoDiagnosticHelper {
                 isParameterizedConstructor = true;
             }
         }
-        return new ConstructorInfoDiagnosticHelper(isUserDefinedConstructor, isPublicNoArgsConstructor, isProtectedNoArgsConstructor, isParameterizedConstructor);
+        return new ConstructorInfoDiagnosticHelper(isUserDefinedConstructor, isPublicNoArgsConstructor, isProtectedNoArgsConstructor, isNoArgsConstructor, isParameterizedConstructor);
     }
 
     /**
@@ -125,6 +141,7 @@ public final class ConstructorInfoDiagnosticHelper {
         this.hasConstructor = this.hasConstructor || calculatedValue.hasConstructor;
         this.hasValidPublicNoArgsConstructor = this.hasValidPublicNoArgsConstructor || calculatedValue.hasValidPublicNoArgsConstructor;
         this.hasValidProtectedNoArgsConstructor = this.hasValidProtectedNoArgsConstructor || calculatedValue.hasValidProtectedNoArgsConstructor;
+        this.hasNoArgsConstructor = this.hasNoArgsConstructor || calculatedValue.hasNoArgsConstructor;
         this.hasParameterizedConstructor = this.hasParameterizedConstructor || calculatedValue.hasParameterizedConstructor;
         return this;
     }
@@ -135,6 +152,6 @@ public final class ConstructorInfoDiagnosticHelper {
      * @return
      */
     public static ConstructorInfoDiagnosticHelper initialize() {
-        return new ConstructorInfoDiagnosticHelper(false, false, false, false);
+        return new ConstructorInfoDiagnosticHelper(false, false, false, false, false);
     }
 }
