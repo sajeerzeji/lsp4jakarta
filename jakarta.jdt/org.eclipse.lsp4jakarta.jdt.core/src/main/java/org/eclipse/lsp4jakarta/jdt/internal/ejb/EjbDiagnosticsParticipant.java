@@ -35,7 +35,7 @@ import org.eclipse.lsp4jakarta.jdt.internal.Messages;
 import org.eclipse.lsp4jakarta.jdt.internal.core.ls.JDTUtilsLSImpl;
 
 /**
- * EJB diagnostic participant that validates session beans have a public no-arg constructor.
+ * EJB diagnostic participant that validates session beans.
  */
 public class EjbDiagnosticsParticipant implements IJavaDiagnosticsParticipant {
 
