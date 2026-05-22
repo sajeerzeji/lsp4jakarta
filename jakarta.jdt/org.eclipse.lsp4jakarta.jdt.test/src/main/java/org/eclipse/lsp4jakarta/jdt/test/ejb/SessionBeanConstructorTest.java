@@ -84,7 +84,7 @@ public class SessionBeanConstructorTest extends BaseJakartaTest {
         assertJavaDiagnostics(createDiagnosticsParams(getJavaFileUri(projectRelativePath)), IJDT_UTILS);
     }
 
-    private JakartaJavaDiagnosticsParams createDiagnosti csParams(String uri) {
+    private JakartaJavaDiagnosticsParams createDiagnosticsParams(String uri) {
         JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
         diagnosticsParams.setUris(Arrays.asList(uri));
         return diagnosticsParams;
