@@ -52,6 +52,7 @@ public class EjbDiagnosticsParticipant implements IJavaDiagnosticsParticipant {
 
         IType[] types = unit.getAllTypes();
         for (IType type : types) {
+            // Check if the operation has been cancelled by the user
             if (monitor.isCanceled()) {
                 return null;
             }
