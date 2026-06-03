@@ -33,6 +33,8 @@ public enum JakartaCodeActionId implements ICodeActionId {
     RemoveAllParameters,
     RemoveAnnotationPreDestroy,
     RemoveAnnotationPostConstruct,
+    RemoveAnnotationResource,
+    RemoveResourceAnnotationAttribute,
     RemoveCheckedExceptions,
     AnnotationRemoveStaticModifier,
     InsertSlashAnnotationValueAttribute,
@@ -44,16 +46,24 @@ public enum JakartaCodeActionId implements ICodeActionId {
     DIRemoveFinalModifier,
     DIRemoveAbstractModifier,
     DIRemoveStaticModifier,
+    DIRemoveScopeAttributes,
     // JSON-B
     JSONBRemoveJsonbCreatorAnnotation,
     JSONBRemoveJsonbTransientAnnotation,
     JSONBRemoveAllButJsonbTransientAnnotation,
+    JSONBChangeModifierToPublic,
+    JSONBChangeModifierToProtected,
+    JSONBInsertPublicConstructorToClass,
+    JSONBInsertProtectedConstructorToClass,
+    MakeClassStatic,
     // Persistence
     PersistenceRemoveFinalModifier,
     PersistenceRemoveMapKeyAnnotation,
     PersistenceInsertAttributesToMKJCAnnotation,
     PersistenceInsertPublicCtrtToClass,
     PersistenceInsertProtectedCtrtToClass,
+    PersistenceInsertTemporalAnnotation,
+    PersistenceChangeTemporalValue,
     // WebSockets
     WBInsertPathParamAnnotationWithValueAttrib,
     WBRemoveAnnotation,
@@ -76,11 +86,15 @@ public enum JakartaCodeActionId implements ICodeActionId {
     CDIRemoveProducesAnnotation,
     CDIRemoveInjectAnnotation,
     CDIRemoveScopeDeclarationAnnotationsButOne,
+    CDIRemoveDependentScope,
     CDIReplaceScopeAnnotations,
-    CDIRemoveSingletonAnnotation,
-    CDIRemoveStatelessAnnotation,
     // EJB
-    EJBInsertPublicCtrtToClass;
+    EJBInsertPublicCtrtToClass,
+    CDIRemoveConditionalObserverAnnotations,
+    CDIRemoveNotifyObserverAttribute,
+    CDIRemoveObserverConflictParams,
+    CDIRemoveSingletonAnnotation,
+    CDIRemoveStatelessAnnotation;
 
     @Override
     public String getId() {
