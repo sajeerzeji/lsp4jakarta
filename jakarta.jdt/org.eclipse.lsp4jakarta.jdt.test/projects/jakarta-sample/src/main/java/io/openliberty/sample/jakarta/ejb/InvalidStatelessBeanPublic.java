@@ -3,15 +3,15 @@ package io.openliberty.sample.jakarta.ejb;
 import jakarta.ejb.Stateless;
 
 /**
- * Invalid session bean - lacks the required public no-arg constructor.
+ * Invalid session bean - has a public parameterized constructor (no public no-arg constructor).
  */
 
 @Stateless
-public class InvalidStatelessBean {
+public class InvalidStatelessBeanPublic {
     
     private String name;
 
-    public InvalidStatelessBean(String name) {
+    public InvalidStatelessBeanPublic(String name) {
         this.name = name;
     }
     

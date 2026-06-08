@@ -3,15 +3,15 @@ package io.openliberty.sample.jakarta.ejb;
 import jakarta.ejb.Stateful;
 
 /**
- * Invalid session bean - Lacks the required public no-arg constructor.
+ * Invalid session bean - has only a public parameterized constructor (no public no-arg constructor).
  */
 
 @Stateful
-public class InvalidStatefulBean {
+public class InvalidStatefulBeanPublic {
     
     private int counter;
     
-    public InvalidStatefulBean(int initialValue) {
+    public InvalidStatefulBeanPublic(int initialValue) {
         this.counter = initialValue;
     }
     

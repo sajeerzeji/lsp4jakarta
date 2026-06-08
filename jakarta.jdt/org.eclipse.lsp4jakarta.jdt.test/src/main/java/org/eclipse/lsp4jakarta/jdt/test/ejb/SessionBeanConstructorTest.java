@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2025, 2026 IBM Corporation and others.
+ * Copyright (c) 2026 IBM Corporation and others.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -41,26 +41,44 @@ public class SessionBeanConstructorTest extends BaseJakartaTest {
     protected static IJDTUtils IJDT_UTILS = JDTUtilsLSImpl.getInstance();
 
     @Test
-    public void testInvalidStatelessBean() throws Exception {
-        assertMissingPublicNoArgConstructor("src/main/java/io/openliberty/sample/jakarta/ejb/InvalidStatelessBean.java",
-                                            33, "public InvalidStatelessBean() {\n\t}\n\n\t");
+    public void testInvalidStatelessBeanPublic() throws Exception {
+        assertMissingPublicNoArgConstructor("src/main/java/io/openliberty/sample/jakarta/ejb/InvalidStatelessBeanPublic.java",
+                                            39, "public InvalidStatelessBeanPublic() {\n\t}\n\n\t");
     }
 
     @Test
-    public void testInvalidStatefulBean() throws Exception {
-        assertMissingPublicNoArgConstructor("src/main/java/io/openliberty/sample/jakarta/ejb/InvalidStatefulBean.java",
-                                            32, "public InvalidStatefulBean() {\n\t}\n\n\t");
+    public void testInvalidStatefulBeanPublic() throws Exception {
+        assertMissingPublicNoArgConstructor("src/main/java/io/openliberty/sample/jakarta/ejb/InvalidStatefulBeanPublic.java",
+                                            38, "public InvalidStatefulBeanPublic() {\n\t}\n\n\t");
     }
 
     @Test
-    public void testInvalidSingletonBean() throws Exception {
-        assertMissingPublicNoArgConstructor("src/main/java/io/openliberty/sample/jakarta/ejb/InvalidSingletonBean.java",
-                                            33, "public InvalidSingletonBean() {\n\t}\n\n\t");
+    public void testInvalidSingletonBeanPublic() throws Exception {
+        assertMissingPublicNoArgConstructor("src/main/java/io/openliberty/sample/jakarta/ejb/InvalidSingletonBeanPublic.java",
+                                            39, "public InvalidSingletonBeanPublic() {\n\t}\n\n\t");
     }
 
     @Test
     public void testValidStatelessBean() throws Exception {
         assertNoDiagnostics("src/main/java/io/openliberty/sample/jakarta/ejb/ValidStatelessBean.java");
+    }
+
+    @Test
+    public void testInvalidStatelessBeanPrivate() throws Exception {
+        assertMissingPublicNoArgConstructor("src/main/java/io/openliberty/sample/jakarta/ejb/InvalidStatelessBeanPrivate.java",
+                                            40, "public InvalidStatelessBeanPrivate() {\n\t}\n\n\t");
+    }
+
+    @Test
+    public void testInvalidStatefulBeanPrivate() throws Exception {
+        assertMissingPublicNoArgConstructor("src/main/java/io/openliberty/sample/jakarta/ejb/InvalidStatefulBeanPrivate.java",
+                                            39, "public InvalidStatefulBeanPrivate() {\n\t}\n\n\t");
+    }
+
+    @Test
+    public void testInvalidSingletonBeanPrivate() throws Exception {
+        assertMissingPublicNoArgConstructor("src/main/java/io/openliberty/sample/jakarta/ejb/InvalidSingletonBeanPrivate.java",
+                                            40, "public InvalidSingletonBeanPrivate() {\n\t}\n\n\t");
     }
 
     private void assertMissingPublicNoArgConstructor(String projectRelativePath, int endCharacter,
