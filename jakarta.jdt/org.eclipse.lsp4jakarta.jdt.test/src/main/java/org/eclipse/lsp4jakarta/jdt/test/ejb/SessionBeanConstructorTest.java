@@ -94,7 +94,7 @@ public class SessionBeanConstructorTest extends BaseJakartaTest {
 
         JakartaJavaCodeActionParams codeActionParams = createCodeActionParams(uri, missingConstructorDiagnostic);
         TextEdit insertConstructorEdit = te(11, 4, 11, 4, insertedConstructor);
-        CodeAction addConstructorAction = ca(uri, "Add a no-arg 'public' constructor to this class", missingConstructorDiagnostic, insertConstructorEdit);
+        CodeAction addConstructorAction = ca(uri, "Add a no-arg public constructor to this class", missingConstructorDiagnostic, insertConstructorEdit);
         assertJavaCodeAction(codeActionParams, IJDT_UTILS, addConstructorAction);
     }
 

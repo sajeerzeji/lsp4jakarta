@@ -64,8 +64,8 @@ public class ManagedBeanConstructorTest extends BaseJakartaTest {
                           "protected ManagedBeanConstructor() {\n\t}\n\n\t");
         TextEdit te3 = te(19, 1, 19, 1,
                           "public ManagedBeanConstructor() {\n\t}\n\n\t");
-        CodeAction ca1 = ca(uri, "Add a no-arg 'protected' constructor to this class", d, te2);
-        CodeAction ca2 = ca(uri, "Add a no-arg 'public' constructor to this class", d, te3);
+        CodeAction ca1 = ca(uri, "Add a no-arg protected constructor to this class", d, te2);
+        CodeAction ca2 = ca(uri, "Add a no-arg public constructor to this class", d, te3);
         CodeAction ca3 = ca(uri, "Insert @Inject", d, te1);
         assertJavaCodeAction(codeActionParams1, IJDT_UTILS, ca1, ca2, ca3);
     }

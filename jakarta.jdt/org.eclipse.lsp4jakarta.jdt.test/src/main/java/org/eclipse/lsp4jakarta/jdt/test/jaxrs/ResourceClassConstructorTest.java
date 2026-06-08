@@ -104,7 +104,7 @@ public class ResourceClassConstructorTest extends BaseJakartaTest {
         JakartaJavaCodeActionParams codeActionParams1 = createCodeActionParams(uri, d1);
         TextEdit te1 = te(7, 4, 7, 4, newText1);
         TextEdit te2 = te(7, 4, 7, 11, newText2);
-        CodeAction ca1 = ca(uri, "Add a no-arg 'public' constructor to this class", d1, te1);
+        CodeAction ca1 = ca(uri, "Add a no-arg public constructor to this class", d1, te1);
         CodeAction ca2 = ca(uri, "Make constructor public", d1, te2);
 
         assertJavaCodeAction(codeActionParams1, IJDT_UTILS, ca1, ca2);
@@ -113,7 +113,7 @@ public class ResourceClassConstructorTest extends BaseJakartaTest {
         JakartaJavaCodeActionParams codeActionParams2 = createCodeActionParams(uri, d2);
         TextEdit te3 = te(7, 4, 7, 4, newText1);
         TextEdit te4 = te(11, 4, 11, 13, newText2);
-        CodeAction ca3 = ca(uri, "Add a no-arg 'public' constructor to this class", d2, te3);
+        CodeAction ca3 = ca(uri, "Add a no-arg public constructor to this class", d2, te3);
         CodeAction ca4 = ca(uri, "Make constructor public", d2, te4);
 
         assertJavaCodeAction(codeActionParams2, IJDT_UTILS, ca3, ca4);
@@ -146,7 +146,7 @@ public class ResourceClassConstructorTest extends BaseJakartaTest {
         JakartaJavaCodeActionParams codeActionParams = createCodeActionParams(uri, d1);
         TextEdit te1 = te(19, 4, 19, 4, newText1);
         TextEdit te2 = te(19, 4, 19, 11, newText2);
-        CodeAction ca1 = ca(uri, "Add a no-arg 'public' constructor to this class", d1, te1);
+        CodeAction ca1 = ca(uri, "Add a no-arg public constructor to this class", d1, te1);
         CodeAction ca2 = ca(uri, "Make constructor public", d1, te2);
 
         assertJavaCodeAction(codeActionParams, IJDT_UTILS, ca1, ca2);
@@ -155,7 +155,7 @@ public class ResourceClassConstructorTest extends BaseJakartaTest {
         JakartaJavaCodeActionParams codeActionParams2 = createCodeActionParams(uri, d2);
         TextEdit te3 = te(19, 4, 19, 4, newText1);
         TextEdit te4 = te(23, 4, 23, 13, newText2);
-        CodeAction ca3 = ca(uri, "Add a no-arg 'public' constructor to this class", d2, te3);
+        CodeAction ca3 = ca(uri, "Add a no-arg public constructor to this class", d2, te3);
         CodeAction ca4 = ca(uri, "Make constructor public", d2, te4);
 
         assertJavaCodeAction(codeActionParams2, IJDT_UTILS, ca3, ca4);
