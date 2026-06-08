@@ -43,19 +43,19 @@ public class SessionBeanConstructorTest extends BaseJakartaTest {
     @Test
     public void testInvalidStatelessBean() throws Exception {
         assertMissingPublicNoArgConstructor("src/main/java/io/openliberty/sample/jakarta/ejb/InvalidStatelessBean.java",
-                33, "public InvalidStatelessBean() {\n\t}\n\n\t");
+                                            33, "public InvalidStatelessBean() {\n\t}\n\n\t");
     }
 
     @Test
     public void testInvalidStatefulBean() throws Exception {
         assertMissingPublicNoArgConstructor("src/main/java/io/openliberty/sample/jakarta/ejb/InvalidStatefulBean.java",
-                32, "public InvalidStatefulBean() {\n\t}\n\n\t");
+                                            32, "public InvalidStatefulBean() {\n\t}\n\n\t");
     }
 
     @Test
     public void testInvalidSingletonBean() throws Exception {
         assertMissingPublicNoArgConstructor("src/main/java/io/openliberty/sample/jakarta/ejb/InvalidSingletonBean.java",
-                33, "public InvalidSingletonBean() {\n\t}\n\n\t");
+                                            33, "public InvalidSingletonBean() {\n\t}\n\n\t");
     }
 
     @Test
@@ -69,14 +69,14 @@ public class SessionBeanConstructorTest extends BaseJakartaTest {
         JakartaJavaDiagnosticsParams diagnosticsParams = createDiagnosticsParams(uri);
 
         Diagnostic missingConstructorDiagnostic = d(9, 13, endCharacter,
-                "Session beans must have a public no-argument constructor.",
-                DiagnosticSeverity.Error, "jakarta-ejb", "MissingPublicNoArgConstructor");
+                                                    "Session beans must have a public no-arg constructor.",
+                                                    DiagnosticSeverity.Error, "jakarta-ejb", "MissingPublicNoArgConstructor");
 
         assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, missingConstructorDiagnostic);
 
         JakartaJavaCodeActionParams codeActionParams = createCodeActionParams(uri, missingConstructorDiagnostic);
         TextEdit insertConstructorEdit = te(11, 4, 11, 4, insertedConstructor);
-        CodeAction addConstructorAction = ca(uri, "Add a default 'public' constructor to this class", missingConstructorDiagnostic, insertConstructorEdit);
+        CodeAction addConstructorAction = ca(uri, "Add a no-arg 'public' constructor to this class", missingConstructorDiagnostic, insertConstructorEdit);
         assertJavaCodeAction(codeActionParams, IJDT_UTILS, addConstructorAction);
     }
 

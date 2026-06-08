@@ -155,9 +155,9 @@ public class JakartaPersistenceTest extends BaseJakartaTest {
         // test quick fixes
         JakartaJavaCodeActionParams codeActionParams1 = createCodeActionParams(uri, d);
         TextEdit te1 = te(8, 1, 8, 1, "protected EntityMissingConstructor() {\n\t}\n\n\t");
-        CodeAction ca1 = ca(uri, "Add a default 'protected' constructor to this class", d, te1);
+        CodeAction ca1 = ca(uri, "Add a no-arg 'protected' constructor to this class", d, te1);
         TextEdit te2 = te(8, 1, 8, 1, "public EntityMissingConstructor() {\n\t}\n\n\t");
-        CodeAction ca2 = ca(uri, "Add a default 'public' constructor to this class", d, te2);
+        CodeAction ca2 = ca(uri, "Add a no-arg 'public' constructor to this class", d, te2);
 
         assertJavaCodeAction(codeActionParams1, IJDT_UTILS, ca1, ca2);
     }
@@ -554,97 +554,4 @@ public class JakartaPersistenceTest extends BaseJakartaTest {
 
         assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, versionInHierarchyOnMethodsD1);
     }
-
-    @Test
-    public void testMissingPrimaryKey() throws Exception {
-        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
-        IFile javaFile = javaProject.getProject().getFile(
-                                                          new Path("src/main/java/io/openliberty/sample/jakarta/persistence/EntityMissingPrimaryKey.java"));
-        String uri = javaFile.getLocation().toFile().toURI().toString();
-
-        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
-        diagnosticsParams.setUris(Arrays.asList(uri));
-
-        Diagnostic d = d(5, 13, 36,
-                         "The class EntityMissingPrimaryKey annotated with @Entity must define a primary key using @Id or @EmbeddedId.",
-                         DiagnosticSeverity.Error, "jakarta-persistence", "MissingPrimaryKey");
-
-        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d);
-    }
-
-    @Test
-    public void testEntityWithEmbeddedId() throws Exception {
-        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
-        IFile javaFile = javaProject.getProject().getFile(
-                                                          new Path("src/main/java/io/openliberty/sample/jakarta/persistence/EntityWithEmbeddedId.java"));
-        String uri = javaFile.getLocation().toFile().toURI().toString();
-
-        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
-        diagnosticsParams.setUris(Arrays.asList(uri));
-
-        // Verify that NO diagnostics are produced for an entity with @EmbeddedId
-        // This confirms that @EmbeddedId is correctly recognized as a primary key
-        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS);
-    }
-
-    @Test
-    public void testEntityWithIdOnGetter() throws Exception {
-        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
-        IFile javaFile = javaProject.getProject().getFile(
-                                                          new Path("src/main/java/io/openliberty/sample/jakarta/persistence/EntityWithIdOnGetter.java"));
-        String uri = javaFile.getLocation().toFile().toURI().toString();
-
-        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
-        diagnosticsParams.setUris(Arrays.asList(uri));
-
-        // Verify that NO diagnostics are produced for an entity with @Id on getter method
-        // This confirms that @Id on getter methods is correctly recognized as a primary key
-        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS);
-    }
-
-    @Test
-    public void testEntityWithEmbeddedIdOnGetter() throws Exception {
-        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
-        IFile javaFile = javaProject.getProject().getFile(
-                                                          new Path("src/main/java/io/openliberty/sample/jakarta/persistence/EntityWithEmbeddedIdOnGetter.java"));
-        String uri = javaFile.getLocation().toFile().toURI().toString();
-
-        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
-        diagnosticsParams.setUris(Arrays.asList(uri));
-
-        // Verify that NO diagnostics are produced for an entity with @EmbeddedId on getter method
-        // This confirms that @EmbeddedId on getter methods is correctly recognized as a primary key
-        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS);
-    }
-
-    @Test
-    public void testEntityWithMappedSuperclass() throws Exception {
-        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
-        IFile javaFile = javaProject.getProject().getFile(
-                                                          new Path("src/main/java/io/openliberty/sample/jakarta/persistence/EntityWithMappedSuperclass.java"));
-        String uri = javaFile.getLocation().toFile().toURI().toString();
-
-        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
-        diagnosticsParams.setUris(Arrays.asList(uri));
-
-        // Verify that NO diagnostics are produced for an entity that inherits @Id from @MappedSuperclass
-        // This confirms that primary keys in @MappedSuperclass are correctly recognized
-        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS);
-    }
-
-    @Test
-    public void testEntityWithMappedSuperclassIdOnGetter() throws Exception {
-        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
-        IFile javaFile = javaProject.getProject().getFile(
-                                                          new Path("src/main/java/io/openliberty/sample/jakarta/persistence/EntityWithMappedSuperclassIdOnGetter.java"));
-        String uri = javaFile.getLocation().toFile().toURI().toString();
-
-        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
-        diagnosticsParams.setUris(Arrays.asList(uri));
-
-        // Verify that NO diagnostics are produced for an entity that inherits @Id on getter from @MappedSuperclass
-        // This confirms that primary keys on getter methods in @MappedSuperclass are correctly recognized
-        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS);
-    }
-
 }

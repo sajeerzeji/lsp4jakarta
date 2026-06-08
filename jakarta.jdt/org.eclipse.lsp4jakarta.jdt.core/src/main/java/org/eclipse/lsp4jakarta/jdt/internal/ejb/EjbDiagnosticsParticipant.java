@@ -75,7 +75,7 @@ public class EjbDiagnosticsParticipant implements IJavaDiagnosticsParticipant {
                 }
 
                 if (constructorInfo.hasConstructor() && !constructorInfo.hasValidPublicNoArgsConstructor()) {
-                    String message = Messages.getMessage("SessionBeanNoPublicNoArgConstructor");
+                    String message = Messages.getMessage("SessionBeanNoArgConstructor");
                     Range range = PositionUtils.toNameRange(type, context.getUtils());
                     diagnostics.add(context.createDiagnostic(uri, message, range,
                                                              Constants.DIAGNOSTIC_SOURCE,
