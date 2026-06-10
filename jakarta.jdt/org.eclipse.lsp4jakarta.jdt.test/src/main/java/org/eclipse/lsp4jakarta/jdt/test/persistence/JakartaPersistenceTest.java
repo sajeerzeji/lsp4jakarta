@@ -554,4 +554,5 @@ public class JakartaPersistenceTest extends BaseJakartaTest {
 
         assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, versionInHierarchyOnMethodsD1);
     }
+
 }
