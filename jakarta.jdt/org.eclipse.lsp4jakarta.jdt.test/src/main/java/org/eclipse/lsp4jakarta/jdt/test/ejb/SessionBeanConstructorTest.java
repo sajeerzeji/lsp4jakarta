@@ -64,6 +64,11 @@ public class SessionBeanConstructorTest extends BaseJakartaTest {
     }
 
     @Test
+    public void testValidStatelessBeanNoConstructor() throws Exception {
+        assertNoDiagnostics("src/main/java/io/openliberty/sample/jakarta/ejb/ValidStatelessBeanNoConstructor.java");
+    }
+
+    @Test
     public void testInvalidStatelessBeanPrivate() throws Exception {
         assertMissingPublicNoArgConstructor("src/main/java/io/openliberty/sample/jakarta/ejb/InvalidStatelessBeanPrivate.java",
                                             40, "public InvalidStatelessBeanPrivate() {\n\t}\n\n\t");

@@ -69,8 +69,7 @@ public class EjbDiagnosticsParticipant implements IJavaDiagnosticsParticipant {
             if (!sessionBeanAnnotations.isEmpty()) {
                 ConstructorInfoDiagnosticHelper constructorInfo = ConstructorInfoDiagnosticHelper.initialize();
 
-                IMethod[] methods = type.getMethods();
-                for (IMethod method : methods) {
+                for (IMethod method : type.getMethods()) {
                     constructorInfo.mergeConstructorInfo(ConstructorInfoDiagnosticHelper.getConstructorInfo(method));
                 }
 
