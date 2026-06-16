@@ -12,7 +12,6 @@
 *******************************************************************************/
 package org.eclipse.lsp4jakarta.jdt.core.java.codeaction;
 
-import org.eclipse.lsp4jakarta.commons.codeaction.ICodeActionId;
 import org.eclipse.lsp4jakarta.commons.codeaction.JakartaCodeActionId;
 
 /**
@@ -39,7 +38,7 @@ public class RemoveAbstractModifierQuickFix extends RemoveModifierConflictQuickF
      * {@inheritDoc}
      */
     @Override
-    protected ICodeActionId getCodeActionId() {
+    protected JakartaCodeActionId getCodeActionId() {
         return JakartaCodeActionId.RemoveAbstractModifier;
     }
 }
