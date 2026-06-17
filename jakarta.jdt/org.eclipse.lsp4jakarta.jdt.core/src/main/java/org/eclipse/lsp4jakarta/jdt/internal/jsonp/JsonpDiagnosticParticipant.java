@@ -24,10 +24,12 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CastExpression;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.NullLiteral;
 import org.eclipse.jdt.core.dom.StringLiteral;
@@ -102,6 +104,10 @@ public class JsonpDiagnosticParticipant implements IJavaDiagnosticsParticipant {
         createDiagnosticsForBuilderInvocations(unit, createArrayBuilderMethodInvocations, diagnostics, context, uri,
                                                Messages.getMessage("ErrorMessageJsonPArrayValueNonNull"),
                                                ErrorCode.InvalidJsonArrayBuilderValue);
+
+        // Detect manual JSON parsing patterns that should use JSON-B
+        detectManualJsonParsingPatterns(unit, allMethodInvocations, diagnostics, context, uri);
+
         return diagnostics;
     }
 
@@ -225,5 +231,147 @@ public class JsonpDiagnosticParticipant implements IJavaDiagnosticsParticipant {
         }
 
         return false;
+    }
+
+    /**
+     * Detects manual JSON parsing patterns where Json.createReader() is used
+     * followed by manual field mapping with getter methods like getString(), getInt(), etc.
+     *
+     * @param unit the compilation unit
+     * @param allMethodInvocations all method invocations in the file
+     * @param diagnostics the list to add diagnostics to
+     * @param context the diagnostics context
+     * @param uri the file URI
+     */
+    private void detectManualJsonParsingPatterns(ICompilationUnit unit, List<MethodInvocation> allMethodInvocations,
+                                                 List<Diagnostic> diagnostics, JavaDiagnosticsContext context, String uri) {
+        List<MethodInvocation> createReaderInvocations = allMethodInvocations.stream().filter(mi -> isJsonCreateReaderInvocation(mi)).collect(Collectors.toList());
+
+        for (MethodInvocation createReaderInvocation : createReaderInvocations) {
+            if (isManualParsingPattern(createReaderInvocation, allMethodInvocations)) {
+                String msg = Messages.getMessage("UseJsonbInsteadOfManualParsing");
+                try {
+                    Range range = JDTUtils.toRange(unit, createReaderInvocation.getStartPosition(),
+                                                   createReaderInvocation.getLength());
+                    diagnostics.add(context.createDiagnostic(uri, msg, range, Constants.DIAGNOSTIC_SOURCE,
+                                                             ErrorCode.UseJsonbInsteadOfManualParsing,
+                                                             DiagnosticSeverity.Warning));
+                } catch (JavaModelException e) {
+                    LOGGER.log(Level.SEVERE, "Cannot calculate diagnostics for manual JSON parsing", e.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * Checks if a method invocation is Json.createReader().
+     *
+     * @param mi the method invocation
+     * @return true if it's Json.createReader()
+     */
+    private boolean isJsonCreateReaderInvocation(MethodInvocation mi) {
+        if (!Constants.CREATE_READER.equals(mi.getName().getIdentifier())) {
+            return false;
+        }
+        IMethodBinding binding = mi.resolveMethodBinding();
+        if (binding == null) {
+            return false;
+        }
+        ITypeBinding declaringClass = binding.getDeclaringClass();
+        return declaringClass != null && Constants.JSON_FQ_NAME.equals(declaringClass.getQualifiedName());
+    }
+
+    /**
+     * Checks if a createReader invocation is part of a manual parsing pattern.
+     *
+     * @param createReaderInvocation the createReader method invocation
+     * @param allMethodInvocations all method invocations in the file
+     * @return true if manual parsing pattern is detected
+     */
+    private boolean isManualParsingPattern(MethodInvocation createReaderInvocation,
+                                           List<MethodInvocation> allMethodInvocations) {
+        boolean hasReadObject = allMethodInvocations.stream().anyMatch(mi -> isReadObjectInvocation(mi) &&
+                                                                             isInSameMethodScope(createReaderInvocation, mi));
+
+        if (!hasReadObject) {
+            return false;
+        }
+
+        return allMethodInvocations.stream().anyMatch(mi -> isJsonObjectGetterMethod(mi) &&
+                                                            isInSameMethodScope(createReaderInvocation, mi));
+    }
+
+    /**
+     * Checks if a method invocation is JsonReader.readObject().
+     *
+     * @param mi the method invocation
+     * @return true if it's readObject() on a JsonReader
+     */
+    private boolean isReadObjectInvocation(MethodInvocation mi) {
+        if (!Constants.READ_OBJECT.equals(mi.getName().getIdentifier())) {
+            return false;
+        }
+        IMethodBinding binding = mi.resolveMethodBinding();
+        if (binding == null) {
+            return false;
+        }
+        ITypeBinding declaringClass = binding.getDeclaringClass();
+        return declaringClass != null && Constants.JSON_READER_FQ_NAME.equals(declaringClass.getQualifiedName());
+    }
+
+    /**
+     * Checks if a method invocation is a JsonObject getter method
+     * (getString, getInt, getBoolean, etc.).
+     *
+     * @param mi the method invocation
+     * @return true if it's a JsonObject getter method
+     */
+    private boolean isJsonObjectGetterMethod(MethodInvocation mi) {
+        String methodName = mi.getName().getIdentifier();
+        if (!methodName.equals(Constants.GET_STRING) &&
+            !methodName.equals(Constants.GET_INT) &&
+            !methodName.equals(Constants.GET_BOOLEAN) &&
+            !methodName.equals(Constants.GET_JSON_NUMBER) &&
+            !methodName.equals(Constants.GET_JSON_OBJECT) &&
+            !methodName.equals(Constants.GET_JSON_ARRAY)) {
+            return false;
+        }
+        IMethodBinding binding = mi.resolveMethodBinding();
+        if (binding == null) {
+            return false;
+        }
+        ITypeBinding declaringClass = binding.getDeclaringClass();
+        return declaringClass != null && Constants.JSON_OBJECT_FQ_NAME.equals(declaringClass.getQualifiedName());
+    }
+
+    /**
+     * Returns the nearest enclosing MethodDeclaration for the given AST node,
+     * or null if none exists.
+     *
+     * @param node the AST node
+     * @return the enclosing MethodDeclaration, or null
+     */
+    private MethodDeclaration getEnclosingMethod(ASTNode node) {
+        ASTNode current = node.getParent();
+        while (current != null) {
+            if (current instanceof MethodDeclaration) {
+                return (MethodDeclaration) current;
+            }
+            current = current.getParent();
+        }
+        return null;
+    }
+
+    /**
+     * Checks if two method invocations are in the same enclosing method declaration.
+     *
+     * @param mi1 first method invocation
+     * @param mi2 second method invocation
+     * @return true if both invocations are enclosed by the same MethodDeclaration
+     */
+    private boolean isInSameMethodScope(MethodInvocation mi1, MethodInvocation mi2) {
+        MethodDeclaration enclosing1 = getEnclosingMethod(mi1);
+        MethodDeclaration enclosing2 = getEnclosingMethod(mi2);
+        return enclosing1 != null && enclosing1 == enclosing2;
     }
 }

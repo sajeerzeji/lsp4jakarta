@@ -102,4 +102,27 @@ public class JakartaJsonpTest extends BaseJakartaTest {
         assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, invalidJsonArrayBuilderStringNull, invalidJsonArrayBuilderNull, invalidArrayBuilderTwoParamString);
     }
 
+    @Test
+    public void manualJsonParsingToPojoPattern() throws Exception {
+        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
+        IFile javaFile = javaProject.getProject().getFile(
+                                                          new Path("src/main/java/io/openliberty/sample/jakarta/jsonp/ManualJsonParsingToPojoExample.java"));
+        String uri = javaFile.getLocation().toFile().toURI().toString();
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        Diagnostic d1 = d(41, 28, 75,
+                          "Manual JSON parsing with JSON-P and field-by-field mapping detected. Consider using Jakarta JSON Binding (JSON-B) for automatic object-to-JSON mapping with Jsonb.fromJson() for better performance and maintainability.",
+                          DiagnosticSeverity.Warning, "jakarta-jsonp", "UseJsonbInsteadOfManualParsing");
+        Diagnostic d2 = d(53, 26, 73,
+                          "Manual JSON parsing with JSON-P and field-by-field mapping detected. Consider using Jakarta JSON Binding (JSON-B) for automatic object-to-JSON mapping with Jsonb.fromJson() for better performance and maintainability.",
+                          DiagnosticSeverity.Warning, "jakarta-jsonp", "UseJsonbInsteadOfManualParsing");
+        Diagnostic d3 = d(64, 32, 79,
+                          "Manual JSON parsing with JSON-P and field-by-field mapping detected. Consider using Jakarta JSON Binding (JSON-B) for automatic object-to-JSON mapping with Jsonb.fromJson() for better performance and maintainability.",
+                          DiagnosticSeverity.Warning, "jakarta-jsonp", "UseJsonbInsteadOfManualParsing");
+
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d1, d2, d3);
+    }
+
 }
