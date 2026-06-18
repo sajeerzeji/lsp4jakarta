@@ -112,13 +112,13 @@ public class JakartaJsonpTest extends BaseJakartaTest {
         JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
         diagnosticsParams.setUris(Arrays.asList(uri));
 
-        Diagnostic d1 = d(41, 28, 75,
+        Diagnostic d1 = d(43, 28, 75,
                           "Manual JSON parsing with JSON-P and field-by-field mapping detected. Consider using Jakarta JSON Binding (JSON-B) for automatic object-to-JSON mapping with Jsonb.fromJson() for better performance and maintainability.",
                           DiagnosticSeverity.Warning, "jakarta-jsonp", "UseJsonbInsteadOfManualParsing");
-        Diagnostic d2 = d(53, 26, 73,
+        Diagnostic d2 = d(55, 26, 73,
                           "Manual JSON parsing with JSON-P and field-by-field mapping detected. Consider using Jakarta JSON Binding (JSON-B) for automatic object-to-JSON mapping with Jsonb.fromJson() for better performance and maintainability.",
                           DiagnosticSeverity.Warning, "jakarta-jsonp", "UseJsonbInsteadOfManualParsing");
-        Diagnostic d3 = d(64, 32, 79,
+        Diagnostic d3 = d(66, 32, 79,
                           "Manual JSON parsing with JSON-P and field-by-field mapping detected. Consider using Jakarta JSON Binding (JSON-B) for automatic object-to-JSON mapping with Jsonb.fromJson() for better performance and maintainability.",
                           DiagnosticSeverity.Warning, "jakarta-jsonp", "UseJsonbInsteadOfManualParsing");
 
