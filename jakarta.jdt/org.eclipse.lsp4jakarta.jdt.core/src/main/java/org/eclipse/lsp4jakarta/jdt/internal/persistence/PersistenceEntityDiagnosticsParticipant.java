@@ -54,6 +54,8 @@ import org.eclipse.lsp4jakarta.jdt.internal.DiagnosticUtils;
 import org.eclipse.lsp4jakarta.jdt.internal.Messages;
 import org.eclipse.lsp4jakarta.jdt.internal.core.ls.JDTUtilsLSImpl;
 
+import com.google.gson.JsonArray;
+
 /**
  * Persistence diagnostic participant that manages the use of @Entity
  * annotations.
@@ -84,11 +86,58 @@ public class PersistenceEntityDiagnosticsParticipant implements IJavaDiagnostics
             allAnnotations = type.getAnnotations();
 
             IAnnotation EntityAnnotation = null;
+            IAnnotation MappedSuperclassAnnotation = null;
+            IAnnotation NamedEntityGraphAnnotation = null;
+            IAnnotation NamedQueryAnnotation = null;
+            IAnnotation NamedNativeQueryAnnotation = null;
+
             for (IAnnotation annotation : allAnnotations) {
-                if (DiagnosticUtils.isMatchedJavaElement(type, annotation.getElementName(),
-                                                         Constants.ENTITY)) {
+                String elementName = annotation.getElementName();
+                if (DiagnosticUtils.isMatchedJavaElement(type, elementName, Constants.ENTITY)) {
                     EntityAnnotation = annotation;
+                } else if (DiagnosticUtils.isMatchedJavaElement(type, elementName, Constants.MAPPEDSUPERCLASS)) {
+                    MappedSuperclassAnnotation = annotation;
+                } else if (DiagnosticUtils.isMatchedJavaElement(type, elementName, Constants.NAMEDENTITYGRAPH)) {
+                    NamedEntityGraphAnnotation = annotation;
+                } else if (DiagnosticUtils.isMatchedJavaElement(type, elementName, Constants.NAMEDQUERY)) {
+                    NamedQueryAnnotation = annotation;
+                } else if (DiagnosticUtils.isMatchedJavaElement(type, elementName, Constants.NAMEDNATIVEQUERY)) {
+                    NamedNativeQueryAnnotation = annotation;
                 }
+            }
+
+            boolean hasEntity = EntityAnnotation != null;
+            boolean hasMappedSuperclass = MappedSuperclassAnnotation != null;
+
+            // Validate named JPA annotations are on correct class types
+            if (NamedEntityGraphAnnotation != null && !hasEntity) {
+                JsonArray diagnosticsData = new JsonArray();
+                diagnosticsData.add(Constants.NAMEDENTITYGRAPH);
+                Range range = PositionUtils.toNameRange(NamedEntityGraphAnnotation, context.getUtils());
+                diagnostics.add(context.createDiagnostic(uri,
+                                                         Messages.getMessage("NamedEntityGraphOnNonEntityClass"), range,
+                                                         Constants.DIAGNOSTIC_SOURCE, diagnosticsData,
+                                                         ErrorCode.NamedEntityGraphOnNonEntityClass, DiagnosticSeverity.Error));
+            }
+
+            if (NamedQueryAnnotation != null && !hasEntity && !hasMappedSuperclass) {
+                JsonArray diagnosticsData = new JsonArray();
+                diagnosticsData.add(Constants.NAMEDQUERY);
+                Range range = PositionUtils.toNameRange(NamedQueryAnnotation, context.getUtils());
+                diagnostics.add(context.createDiagnostic(uri,
+                                                         Messages.getMessage("NamedQueryOnInvalidClass"), range,
+                                                         Constants.DIAGNOSTIC_SOURCE, diagnosticsData,
+                                                         ErrorCode.NamedQueryOnInvalidClass, DiagnosticSeverity.Error));
+            }
+
+            if (NamedNativeQueryAnnotation != null && !hasEntity && !hasMappedSuperclass) {
+                JsonArray diagnosticsData = new JsonArray();
+                diagnosticsData.add(Constants.NAMEDNATIVEQUERY);
+                Range range = PositionUtils.toNameRange(NamedNativeQueryAnnotation, context.getUtils());
+                diagnostics.add(context.createDiagnostic(uri,
+                                                         Messages.getMessage("NamedNativeQueryOnInvalidClass"), range,
+                                                         Constants.DIAGNOSTIC_SOURCE, diagnosticsData,
+                                                         ErrorCode.NamedNativeQueryOnInvalidClass, DiagnosticSeverity.Error));
             }
 
             if (EntityAnnotation != null) {
