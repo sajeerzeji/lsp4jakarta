@@ -22,6 +22,8 @@ import static org.eclipse.lsp4jakarta.jdt.test.core.JakartaForJavaAssert.te;
 import java.util.Arrays;
 
 import org.eclipse.core.resources.IFile;
+
+import com.google.gson.JsonArray;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
@@ -629,6 +631,120 @@ public class JakartaPersistenceTest extends BaseJakartaTest {
 
         // Verify that NO diagnostics are produced for valid Long return type
         assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS);
+    }
+
+    @Test
+    public void testNamedEntityGraphOnValidEntityClass() throws Exception {
+        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
+        IFile javaFile = javaProject.getProject().getFile(
+                                                          new Path("src/main/java/io/openliberty/sample/jakarta/persistence/NamedEntityGraphOnValidEntityClass.java"));
+        String uri = javaFile.getLocation().toFile().toURI().toString();
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS);
+    }
+
+    @Test
+    public void testNamedQueryOnValidClass() throws Exception {
+        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
+        IFile javaFile = javaProject.getProject().getFile(
+                                                          new Path("src/main/java/io/openliberty/sample/jakarta/persistence/NamedQueryOnValidClass.java"));
+        String uri = javaFile.getLocation().toFile().toURI().toString();
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS);
+    }
+
+    @Test
+    public void testNamedNativeQueryOnValidClass() throws Exception {
+        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
+        IFile javaFile = javaProject.getProject().getFile(
+                                                          new Path("src/main/java/io/openliberty/sample/jakarta/persistence/NamedNativeQueryOnValidClass.java"));
+        String uri = javaFile.getLocation().toFile().toURI().toString();
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS);
+    }
+
+    @Test
+    public void testNamedEntityGraphOnNonEntityClass() throws Exception {
+        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
+        IFile javaFile = javaProject.getProject().getFile(
+                                                          new Path("src/main/java/io/openliberty/sample/jakarta/persistence/NamedEntityGraphOnNonEntityClass.java"));
+        String uri = javaFile.getLocation().toFile().toURI().toString();
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        JsonArray diagnosticsData = new JsonArray();
+        diagnosticsData.add("jakarta.persistence.NamedEntityGraph");
+        Diagnostic expectedDiagnostic = d(4, 0, 38,
+                                          "@NamedEntityGraph must only be applied to a class annotated with @Entity.",
+                                          DiagnosticSeverity.Error, "jakarta-persistence", "NamedEntityGraphOnNonEntityClass",
+                                          diagnosticsData);
+
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, expectedDiagnostic);
+
+        JakartaJavaCodeActionParams codeActionParams = createCodeActionParams(uri, expectedDiagnostic);
+        TextEdit expectedTextEdit = te(4, 0, 5, 0, "");
+        CodeAction expectedCodeAction = ca(uri, "Remove @NamedEntityGraph", expectedDiagnostic, expectedTextEdit);
+        assertJavaCodeAction(codeActionParams, IJDT_UTILS, expectedCodeAction);
+    }
+
+    @Test
+    public void testNamedQueryOnInvalidClass() throws Exception {
+        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
+        IFile javaFile = javaProject.getProject().getFile(
+                                                          new Path("src/main/java/io/openliberty/sample/jakarta/persistence/NamedQueryOnInvalidClass.java"));
+        String uri = javaFile.getLocation().toFile().toURI().toString();
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        JsonArray diagnosticsData = new JsonArray();
+        diagnosticsData.add("jakarta.persistence.NamedQuery");
+        Diagnostic expectedDiagnostic = d(4, 0, 66,
+                                          "@NamedQuery must only be applied to a class annotated with @Entity or @MappedSuperclass.",
+                                          DiagnosticSeverity.Error, "jakarta-persistence", "NamedQueryOnInvalidClass",
+                                          diagnosticsData);
+
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, expectedDiagnostic);
+
+        JakartaJavaCodeActionParams codeActionParams = createCodeActionParams(uri, expectedDiagnostic);
+        TextEdit expectedTextEdit = te(4, 0, 5, 0, "");
+        CodeAction expectedCodeAction = ca(uri, "Remove @NamedQuery", expectedDiagnostic, expectedTextEdit);
+        assertJavaCodeAction(codeActionParams, IJDT_UTILS, expectedCodeAction);
+    }
+
+    @Test
+    public void testNamedNativeQueryOnInvalidClass() throws Exception {
+        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
+        IFile javaFile = javaProject.getProject().getFile(
+                                                          new Path("src/main/java/io/openliberty/sample/jakarta/persistence/NamedNativeQueryOnInvalidClass.java"));
+        String uri = javaFile.getLocation().toFile().toURI().toString();
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        JsonArray diagnosticsData = new JsonArray();
+        diagnosticsData.add("jakarta.persistence.NamedNativeQuery");
+        Diagnostic expectedDiagnostic = d(4, 0, 136,
+                                          "@NamedNativeQuery must only be applied to a class annotated with @Entity or @MappedSuperclass.",
+                                          DiagnosticSeverity.Error, "jakarta-persistence", "NamedNativeQueryOnInvalidClass",
+                                          diagnosticsData);
+
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, expectedDiagnostic);
+
+        JakartaJavaCodeActionParams codeActionParams = createCodeActionParams(uri, expectedDiagnostic);
+        TextEdit expectedTextEdit = te(4, 0, 5, 0, "");
+        CodeAction expectedCodeAction = ca(uri, "Remove @NamedNativeQuery", expectedDiagnostic, expectedTextEdit);
+        assertJavaCodeAction(codeActionParams, IJDT_UTILS, expectedCodeAction);
     }
 
 }
