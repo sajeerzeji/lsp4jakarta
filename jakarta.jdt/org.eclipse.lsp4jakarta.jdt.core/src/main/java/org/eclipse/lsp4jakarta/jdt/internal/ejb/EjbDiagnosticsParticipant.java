@@ -70,10 +70,7 @@ public class EjbDiagnosticsParticipant implements IJavaDiagnosticsParticipant {
 
             if (!sessionBeanAnnotations.isEmpty()) {
                 if (sessionBeanAnnotations.size() > 1) {
-                    String annotationNames = sessionBeanAnnotations.stream()
-                            .map(DiagnosticUtils::getSimpleName)
-                            .map(name -> "@" + name)
-                            .collect(Collectors.joining(", "));
+                    String annotationNames = sessionBeanAnnotations.stream().map(DiagnosticUtils::getSimpleName).map(name -> "@" + name).collect(Collectors.joining(", "));
                     String message = Messages.getMessage("SessionBeanConflictingAnnotations", annotationNames);
                     Range range = PositionUtils.toNameRange(type, context.getUtils());
                     diagnostics.add(context.createDiagnostic(uri, message, range,

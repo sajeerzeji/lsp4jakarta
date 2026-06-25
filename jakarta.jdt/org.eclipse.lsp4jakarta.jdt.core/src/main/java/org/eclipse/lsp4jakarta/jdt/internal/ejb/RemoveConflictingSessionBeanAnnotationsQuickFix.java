@@ -62,9 +62,7 @@ public class RemoveConflictingSessionBeanAnnotationsQuickFix extends RemoveAnnot
 
         if (parentType != null) {
             JsonArray diagnosticData = (JsonArray) diagnostic.getData();
-            List<String> annotations = IntStream.range(0, diagnosticData.size())
-                    .mapToObj(idx -> diagnosticData.get(idx).getAsString())
-                    .collect(Collectors.toList());
+            List<String> annotations = IntStream.range(0, diagnosticData.size()).mapToObj(idx -> diagnosticData.get(idx).getAsString()).collect(Collectors.toList());
 
             for (String annotation : annotations) {
                 List<String> resultingAnnotations = new ArrayList<>(annotations);
