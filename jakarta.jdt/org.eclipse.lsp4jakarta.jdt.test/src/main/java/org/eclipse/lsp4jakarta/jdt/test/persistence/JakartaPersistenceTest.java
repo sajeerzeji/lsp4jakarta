@@ -692,9 +692,11 @@ public class JakartaPersistenceTest extends BaseJakartaTest {
         assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, expectedDiagnostic);
 
         JakartaJavaCodeActionParams codeActionParams = createCodeActionParams(uri, expectedDiagnostic);
-        TextEdit expectedTextEdit = te(4, 0, 5, 0, "");
-        CodeAction expectedCodeAction = ca(uri, "Remove @NamedEntityGraph", expectedDiagnostic, expectedTextEdit);
-        assertJavaCodeAction(codeActionParams, IJDT_UTILS, expectedCodeAction);
+        TextEdit insertEntityTextEdit = te(2, 0, 4, 0, "import jakarta.persistence.Entity;\nimport jakarta.persistence.NamedEntityGraph;\n\n@Entity\n");
+        CodeAction insertEntityCodeAction = ca(uri, "Insert @Entity", expectedDiagnostic, insertEntityTextEdit);
+        TextEdit removeTextEdit = te(4, 0, 5, 0, "");
+        CodeAction removeCodeAction = ca(uri, "Remove @NamedEntityGraph", expectedDiagnostic, removeTextEdit);
+        assertJavaCodeAction(codeActionParams, IJDT_UTILS, insertEntityCodeAction, removeCodeAction);
     }
 
     @Test
@@ -717,9 +719,13 @@ public class JakartaPersistenceTest extends BaseJakartaTest {
         assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, expectedDiagnostic);
 
         JakartaJavaCodeActionParams codeActionParams = createCodeActionParams(uri, expectedDiagnostic);
-        TextEdit expectedTextEdit = te(4, 0, 5, 0, "");
-        CodeAction expectedCodeAction = ca(uri, "Remove @NamedQuery", expectedDiagnostic, expectedTextEdit);
-        assertJavaCodeAction(codeActionParams, IJDT_UTILS, expectedCodeAction);
+        TextEdit insertEntityTextEdit = te(2, 0, 4, 0, "import jakarta.persistence.Entity;\nimport jakarta.persistence.NamedQuery;\n\n@Entity\n");
+        CodeAction insertEntityCodeAction = ca(uri, "Insert @Entity", expectedDiagnostic, insertEntityTextEdit);
+        TextEdit insertMappedSuperclassTextEdit = te(2, 0, 4, 0, "import jakarta.persistence.MappedSuperclass;\nimport jakarta.persistence.NamedQuery;\n\n@MappedSuperclass\n");
+        CodeAction insertMappedSuperclassCodeAction = ca(uri, "Insert @MappedSuperclass", expectedDiagnostic, insertMappedSuperclassTextEdit);
+        TextEdit removeTextEdit = te(4, 0, 5, 0, "");
+        CodeAction removeCodeAction = ca(uri, "Remove @NamedQuery", expectedDiagnostic, removeTextEdit);
+        assertJavaCodeAction(codeActionParams, IJDT_UTILS, insertEntityCodeAction, insertMappedSuperclassCodeAction, removeCodeAction);
     }
 
     @Test
@@ -742,9 +748,14 @@ public class JakartaPersistenceTest extends BaseJakartaTest {
         assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, expectedDiagnostic);
 
         JakartaJavaCodeActionParams codeActionParams = createCodeActionParams(uri, expectedDiagnostic);
-        TextEdit expectedTextEdit = te(4, 0, 5, 0, "");
-        CodeAction expectedCodeAction = ca(uri, "Remove @NamedNativeQuery", expectedDiagnostic, expectedTextEdit);
-        assertJavaCodeAction(codeActionParams, IJDT_UTILS, expectedCodeAction);
+        TextEdit insertEntityTextEdit = te(2, 0, 4, 0, "import jakarta.persistence.Entity;\nimport jakarta.persistence.NamedNativeQuery;\n\n@Entity\n");
+        CodeAction insertEntityCodeAction = ca(uri, "Insert @Entity", expectedDiagnostic, insertEntityTextEdit);
+        TextEdit insertMappedSuperclassTextEdit = te(2, 0, 4, 0,
+                                                     "import jakarta.persistence.MappedSuperclass;\nimport jakarta.persistence.NamedNativeQuery;\n\n@MappedSuperclass\n");
+        CodeAction insertMappedSuperclassCodeAction = ca(uri, "Insert @MappedSuperclass", expectedDiagnostic, insertMappedSuperclassTextEdit);
+        TextEdit removeTextEdit = te(4, 0, 5, 0, "");
+        CodeAction removeCodeAction = ca(uri, "Remove @NamedNativeQuery", expectedDiagnostic, removeTextEdit);
+        assertJavaCodeAction(codeActionParams, IJDT_UTILS, insertEntityCodeAction, insertMappedSuperclassCodeAction, removeCodeAction);
     }
 
 }
