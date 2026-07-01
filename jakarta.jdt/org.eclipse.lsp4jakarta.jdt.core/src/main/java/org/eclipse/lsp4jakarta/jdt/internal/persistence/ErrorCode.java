@@ -38,8 +38,11 @@ public enum ErrorCode implements IJavaErrorCode {
     DuplicateVersionAnnotationInHierarchy,
     InvalidVersionFieldOrPropertyType,
     NamedEntityGraphOnNonEntityClass,
+    NamedEntityGraphsOnNonEntityClass,
     NamedQueryOnInvalidClass,
-    NamedNativeQueryOnInvalidClass;
+    NamedQueriesOnInvalidClass,
+    NamedNativeQueryOnInvalidClass,
+    NamedNativeQueriesOnInvalidClass;
 
     /**
      * {@inheritDoc}
