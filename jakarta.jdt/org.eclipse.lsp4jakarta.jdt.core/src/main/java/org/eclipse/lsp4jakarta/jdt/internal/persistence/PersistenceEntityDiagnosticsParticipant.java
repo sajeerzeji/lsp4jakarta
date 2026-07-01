@@ -110,35 +110,15 @@ public class PersistenceEntityDiagnosticsParticipant implements IJavaDiagnostics
             boolean hasMappedSuperclass = MappedSuperclassAnnotation != null;
 
             // Validate named JPA annotations are on correct class types
-            if (NamedEntityGraphAnnotation != null && !hasEntity) {
-                JsonArray diagnosticsData = new JsonArray();
-                diagnosticsData.add(Constants.NAMEDENTITYGRAPH);
-                Range range = PositionUtils.toNameRange(NamedEntityGraphAnnotation, context.getUtils());
-                diagnostics.add(context.createDiagnostic(uri,
-                                                         Messages.getMessage("NamedEntityGraphOnNonEntityClass"), range,
-                                                         Constants.DIAGNOSTIC_SOURCE, diagnosticsData,
-                                                         ErrorCode.NamedEntityGraphOnNonEntityClass, DiagnosticSeverity.Error));
-            }
-
-            if (NamedQueryAnnotation != null && !hasEntity && !hasMappedSuperclass) {
-                JsonArray diagnosticsData = new JsonArray();
-                diagnosticsData.add(Constants.NAMEDQUERY);
-                Range range = PositionUtils.toNameRange(NamedQueryAnnotation, context.getUtils());
-                diagnostics.add(context.createDiagnostic(uri,
-                                                         Messages.getMessage("NamedQueryOnInvalidClass"), range,
-                                                         Constants.DIAGNOSTIC_SOURCE, diagnosticsData,
-                                                         ErrorCode.NamedQueryOnInvalidClass, DiagnosticSeverity.Error));
-            }
-
-            if (NamedNativeQueryAnnotation != null && !hasEntity && !hasMappedSuperclass) {
-                JsonArray diagnosticsData = new JsonArray();
-                diagnosticsData.add(Constants.NAMEDNATIVEQUERY);
-                Range range = PositionUtils.toNameRange(NamedNativeQueryAnnotation, context.getUtils());
-                diagnostics.add(context.createDiagnostic(uri,
-                                                         Messages.getMessage("NamedNativeQueryOnInvalidClass"), range,
-                                                         Constants.DIAGNOSTIC_SOURCE, diagnosticsData,
-                                                         ErrorCode.NamedNativeQueryOnInvalidClass, DiagnosticSeverity.Error));
-            }
+            validateNamedAnnotationPlacement(NamedEntityGraphAnnotation, Constants.NAMEDENTITYGRAPH,
+                                             hasEntity, "NamedEntityGraphOnNonEntityClass",
+                                             ErrorCode.NamedEntityGraphOnNonEntityClass, uri, context, diagnostics);
+            validateNamedAnnotationPlacement(NamedQueryAnnotation, Constants.NAMEDQUERY,
+                                             hasEntity || hasMappedSuperclass, "NamedQueryOnInvalidClass",
+                                             ErrorCode.NamedQueryOnInvalidClass, uri, context, diagnostics);
+            validateNamedAnnotationPlacement(NamedNativeQueryAnnotation, Constants.NAMEDNATIVEQUERY,
+                                             hasEntity || hasMappedSuperclass, "NamedNativeQueryOnInvalidClass",
+                                             ErrorCode.NamedNativeQueryOnInvalidClass, uri, context, diagnostics);
 
             if (EntityAnnotation != null) {
                 // Get constructor information
@@ -248,6 +228,36 @@ public class PersistenceEntityDiagnosticsParticipant implements IJavaDiagnostics
         }
 
         return diagnostics;
+    }
+
+    /**
+     * Validates that a named JPA annotation is placed on a class type that satisfies
+     * the required condition. Adds an error diagnostic when the annotation is present
+     * but the condition is not met.
+     *
+     * @param annotation the annotation to validate, or {@code null} to skip
+     * @param annotationFQN the fully-qualified annotation name (used as diagnostic data)
+     * @param isValid {@code true} if the class satisfies the placement requirement
+     * @param messageKey the message key for the diagnostic message
+     * @param errorCode the error code identifying the diagnostic
+     * @param uri the URI of the compilation unit being analysed
+     * @param context the diagnostics context
+     * @param diagnostics the list to add any new diagnostic to
+     * @throws JavaModelException
+     */
+    private void validateNamedAnnotationPlacement(IAnnotation annotation, String annotationFQN,
+                                                  boolean isValid, String messageKey, ErrorCode errorCode,
+                                                  String uri, JavaDiagnosticsContext context,
+                                                  List<Diagnostic> diagnostics) throws JavaModelException {
+        if (annotation == null || isValid) {
+            return;
+        }
+        JsonArray diagnosticsData = new JsonArray();
+        diagnosticsData.add(annotationFQN);
+        Range range = PositionUtils.toNameRange(annotation, context.getUtils());
+        diagnostics.add(context.createDiagnostic(uri, Messages.getMessage(messageKey), range,
+                                                 Constants.DIAGNOSTIC_SOURCE, diagnosticsData,
+                                                 errorCode, DiagnosticSeverity.Error));
     }
 
     /**
