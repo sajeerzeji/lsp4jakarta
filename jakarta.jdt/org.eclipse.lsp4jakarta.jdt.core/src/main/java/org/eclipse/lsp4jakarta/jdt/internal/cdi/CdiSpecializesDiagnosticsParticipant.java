@@ -18,9 +18,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.core.IAnnotation;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
@@ -35,12 +37,13 @@ import org.eclipse.lsp4jakarta.jdt.core.java.diagnostics.IJavaDiagnosticsPartici
 import org.eclipse.lsp4jakarta.jdt.core.java.diagnostics.JavaDiagnosticsContext;
 import org.eclipse.lsp4jakarta.jdt.core.utils.IJDTUtils;
 import org.eclipse.lsp4jakarta.jdt.core.utils.PositionUtils;
+import org.eclipse.lsp4jakarta.jdt.core.utils.TypeHierarchyUtils;
 import org.eclipse.lsp4jakarta.jdt.internal.DiagnosticUtils;
 import org.eclipse.lsp4jakarta.jdt.internal.Messages;
 import org.eclipse.lsp4jakarta.jdt.internal.core.java.ManagedBean;
 import org.eclipse.lsp4jakarta.jdt.internal.core.ls.JDTUtilsLSImpl;
 
-/** Detects inconsistent specialization: more than one bean specializing the same base bean. */
+/** Validates CDI specialization: superclass must be a scoped bean, no duplicate specialization of the same base. */
 public class CdiSpecializesDiagnosticsParticipant implements IJavaDiagnosticsParticipant {
 
     private static final Logger LOGGER = Logger.getLogger(CdiSpecializesDiagnosticsParticipant.class.getName());
@@ -71,10 +74,28 @@ public class CdiSpecializesDiagnosticsParticipant implements IJavaDiagnosticsPar
                 return diagnostics;
             }
 
-            // Build a map of ultimate base FQ name to all @Specializes types across the project
-            Map<String, List<IType>> specializersByUltimateBase = collectProjectSpecializersByUltimateBase(unit);
+            // Validate each @Specializes type in this CU
+            for (IType type : specializersInUnit) {
+                // Rule 1: direct superclass must be a scoped CDI bean
+                validateSpecializes(type, uri, context, diagnostics);
 
-            // Report a diagnostic on any type whose ultimate base is shared by another specializer
+                // Rule 2: must not declare an explicit bean name via @Named
+                for (IAnnotation annotation : type.getAnnotations()) {
+                    if (DiagnosticUtils.isMatchedAnnotation(unit, annotation, Constants.NAMED_FQ_NAME)) {
+                        Range range = PositionUtils.toNameRange(annotation, context.getUtils());
+                        diagnostics.add(context.createDiagnostic(uri,
+                                                                 Messages.getMessage("SpecializedBeanWithNamedAnnotation", type.getElementName()),
+                                                                 range,
+                                                                 Constants.DIAGNOSTIC_SOURCE, null,
+                                                                 ErrorCode.InvalidSpecializedBeanWithNamedAnnotation,
+                                                                 DiagnosticSeverity.Error));
+                        break;
+                    }
+                }
+            }
+
+            // Rule 3: inconsistent specialization -- more than one bean specializes the same base
+            Map<String, List<IType>> specializersByUltimateBase = collectProjectSpecializersByUltimateBase(unit);
             for (IType type : specializersInUnit) {
                 String supertypeFqName = resolveUltimateBaseFqName(type);
                 if (supertypeFqName == null) {
@@ -94,10 +115,46 @@ public class CdiSpecializesDiagnosticsParticipant implements IJavaDiagnosticsPar
                 }
             }
         } catch (JavaModelException e) {
-            LOGGER.log(Level.SEVERE, "Error occurred while checking for inconsistent specialization", e);
+            LOGGER.log(Level.SEVERE, "Error occurred while validating @Specializes usage", e);
         }
 
         return diagnostics;
+    }
+
+    /**
+     * Validates that a class annotated with @Specializes directly extends a valid bean.
+     *
+     * @param type the type to validate
+     * @param uri the file URI
+     * @param context the diagnostics context
+     * @param diagnostics the list to add diagnostics to
+     * @throws JavaModelException if an error occurs accessing the Java model
+     */
+    private void validateSpecializes(IType type, String uri, JavaDiagnosticsContext context,
+                                     List<Diagnostic> diagnostics) throws JavaModelException {
+        boolean directSuperclassIsBean = Stream.concat(Constants.SCOPE_FQ_NAMES.stream(),
+                                                       Stream.of(Constants.NORMAL_SCOPE_FQ_NAME)).anyMatch(scopeFQName -> {
+                                                           try {
+                                                               return TypeHierarchyUtils.directSuperClassHasAnnotation(type, scopeFQName);
+                                                           } catch (JavaModelException e) {
+                                                               LOGGER.log(Level.WARNING, "Could not inspect direct superclass annotations", e);
+                                                               return false;
+                                                           }
+                                                       });
+        if (!directSuperclassIsBean) {
+            directSuperclassIsBean = TypeHierarchyUtils.directSuperclassHasAnnotationWithMetaAnnotation(
+                                                                                                        type, Constants.NORMAL_SCOPE_FQ_NAME);
+        }
+        if (directSuperclassIsBean) {
+            return;
+        }
+        Range range = PositionUtils.toNameRange(type, context.getUtils());
+        diagnostics.add(context.createDiagnostic(uri,
+                                                 Messages.getMessage("InvalidSpecializesAnnotationOnNonBeanSuperclass"),
+                                                 range,
+                                                 Constants.DIAGNOSTIC_SOURCE, null,
+                                                 ErrorCode.InvalidSpecializesAnnotationOnNonBeanSuperclass,
+                                                 DiagnosticSeverity.Error));
     }
 
     /**
