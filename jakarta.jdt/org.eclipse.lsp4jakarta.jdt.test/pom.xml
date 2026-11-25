@@ -33,6 +33,14 @@
         <plugins>
             <plugin>
                 <groupId>org.eclipse.tycho</groupId>
+                <artifactId>tycho-compiler-plugin</artifactId>
+                <configuration>
+                    <source>21</source>
+                    <target>21</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.eclipse.tycho</groupId>
                 <artifactId>tycho-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>-Dosgi.requiredJavaVersion=21</argLine>

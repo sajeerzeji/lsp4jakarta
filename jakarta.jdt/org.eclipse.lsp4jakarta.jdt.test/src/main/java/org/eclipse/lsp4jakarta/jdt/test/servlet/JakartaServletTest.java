@@ -317,4 +317,159 @@ public class JakartaServletTest extends BaseJakartaTest {
         // Should not trigger any diagnostic - HttpServlet is a valid Servlet subclass
         assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS);
     }
+
+    @Test
+    public void MissingLeadingSlashServlet() throws Exception {
+        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
+        IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/MissingLeadingSlashServlet.java"));
+        String uri = javaFile.getLocation().toFile().toURI().toString();
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        Diagnostic d = d(5, 0, 40,
+                         "URL pattern 'foo/bar' must start with a '/' (unless an extension mapping starting with '*.').",
+                         DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriMissingLeadingSlash");
+
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d);
+
+        JakartaJavaCodeActionParams codeActionParams = createCodeActionParams(uri, d);
+        TextEdit te = te(5, 28, 5, 37, "\"/foo/bar\"");
+        CodeAction ca = ca(uri, "Add leading '/' to URL pattern", d, te);
+        assertJavaCodeAction(codeActionParams, IJDT_UTILS, ca);
+    }
+
+    @Test
+    public void ValidExtensionAndRootServlet() throws Exception {
+        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
+        IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/ValidExtensionAndRootServlet.java"));
+        String uri = javaFile.getLocation().toFile().toURI().toString();
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS);
+    }
+
+    @Test
+    public void FragmentAndQueryServlet() throws Exception {
+        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
+        IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/FragmentAndQueryServlet.java"));
+        String uri = javaFile.getLocation().toFile().toURI().toString();
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        Diagnostic d1 = d(5, 0, 62,
+                          "URL pattern '/foo#fragment' must not contain a fragment identifier ('#').",
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsFragment");
+        Diagnostic d2 = d(5, 0, 62,
+                          "URL pattern '/bar?query=1' must not contain a query string ('?').",
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsQueryString");
+
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d1, d2);
+
+        JakartaJavaCodeActionParams codeActionParams1 = createCodeActionParams(uri, d1);
+        TextEdit te1 = te(5, 28, 5, 43, "\"/foo\"");
+        CodeAction ca1 = ca(uri, "Remove fragment from URL pattern", d1, te1);
+        assertJavaCodeAction(codeActionParams1, IJDT_UTILS, ca1);
+
+        JakartaJavaCodeActionParams codeActionParams2 = createCodeActionParams(uri, d2);
+        TextEdit te2 = te(5, 45, 5, 59, "\"/bar\"");
+        CodeAction ca2 = ca(uri, "Remove query string from URL pattern", d2, te2);
+        assertJavaCodeAction(codeActionParams2, IJDT_UTILS, ca2);
+    }
+
+    @Test
+    public void EncodedAndBackslashServlet() throws Exception {
+        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
+        IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/EncodedAndBackslashServlet.java"));
+        String uri = javaFile.getLocation().toFile().toURI().toString();
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        Diagnostic d1 = d(5, 0, 70,
+                          "URL pattern '/foo%2Fbar' must not contain an encoded slash ('%2F').",
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriEncodedSlash");
+        Diagnostic d2 = d(5, 0, 70,
+                          "URL pattern '/foo\\bar' must not contain a backslash character ('\\').",
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsBackslash");
+        Diagnostic d3 = d(5, 0, 70,
+                          "URL pattern '/foo%5Cbar' must not contain a backslash character ('\\').",
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsBackslash");
+
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d1, d2, d3);
+    }
+
+    @Test
+    public void DotSegmentsAndTraversalServlet() throws Exception {
+        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
+        IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/DotSegmentsAndTraversalServlet.java"));
+        String uri = javaFile.getLocation().toFile().toURI().toString();
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        Diagnostic d1 = d(5, 0, 89,
+                          "URL pattern '/../foo' must not contain a leading dot-dot segment or resolve above the root.",
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriLeadingDotDotSegment");
+        Diagnostic d2 = d(5, 0, 89,
+                          "URL pattern '/foo/..;/bar' must not contain dot segments with parameters.",
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriDotSegmentWithParam");
+        Diagnostic d3 = d(5, 0, 89,
+                          "URL pattern '/foo/%2e%2e/bar' must not contain encoded dot segments.",
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriEncodedDotSegment");
+        Diagnostic d4 = d(5, 0, 89,
+                          "URL pattern '/;/foo/bar' must not contain empty segments with parameters.",
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriEmptySegmentWithParam");
+
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d1, d2, d3, d4);
+    }
+
+    @Test
+    public void ControlCharAndEncodingServlet() throws Exception {
+        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
+        IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/ControlCharAndEncodingServlet.java"));
+        String uri = javaFile.getLocation().toFile().toURI().toString();
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        Diagnostic d1 = d(5, 0, 77,
+                          "URL pattern '/foo%00/bar' must not contain control characters.",
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsControlChar");
+        Diagnostic d2 = d(5, 0, 77,
+                          "URL pattern '/foo%XX/bar' contains an invalid percent-encoding sequence.",
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriInvalidPercentEncoding");
+        Diagnostic d3 = d(5, 0, 77,
+                          "URL pattern '/foo%E2%82/bar' contains a malformed UTF-8 sequence.",
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriDecodeError");
+
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d1, d2, d3);
+    }
+
+    @Test
+    public void WildcardAndGlobFilter() throws Exception {
+        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
+        IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/WildcardAndGlobFilter.java"));
+        String uri = javaFile.getLocation().toFile().toURI().toString();
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        Diagnostic d1 = d(5, 0, 49,
+                          "URL pattern '/**' uses '/**', which in Jakarta Servlet matches a literal directory named '*' rather than recursively matching.",
+                          DiagnosticSeverity.Warning, "jakarta-servlet", "ServletUriSpringGlobPattern");
+        Diagnostic d2 = d(5, 0, 49,
+                          "URL pattern '/foo/*/bar' contains an invalid wildcard placement. Wildcards are only permitted as '/*' suffix or '*.' prefix.",
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriMisplacedWildcard");
+
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d1, d2);
+
+        JakartaJavaCodeActionParams codeActionParams1 = createCodeActionParams(uri, d1);
+        TextEdit te1 = te(5, 27, 5, 32, "\"/*\"");
+        CodeAction ca1 = ca(uri, "Replace '/**' with '/*'", d1, te1);
+        assertJavaCodeAction(codeActionParams1, IJDT_UTILS, ca1);
+    }
 }
