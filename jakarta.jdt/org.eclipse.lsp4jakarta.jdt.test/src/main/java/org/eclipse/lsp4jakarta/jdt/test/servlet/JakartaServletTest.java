@@ -21,6 +21,7 @@ import static org.eclipse.lsp4jakarta.jdt.test.core.JakartaForJavaAssert.te;
 
 import java.util.Arrays;
 
+import com.google.gson.JsonPrimitive;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.IJavaProject;
@@ -332,6 +333,22 @@ public class JakartaServletTest extends BaseJakartaTest {
                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriMissingLeadingSlash", "foo/bar");
 
         assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d);
+
+        JakartaJavaCodeActionParams codeActionParams = createCodeActionParams(uri, d);
+        TextEdit te = te(5, 28, 5, 37, "\"/foo/bar\"");
+        CodeAction ca = ca(uri, "Add leading '/' to URL pattern", d, te);
+        assertJavaCodeAction(codeActionParams, IJDT_UTILS, ca);
+    }
+
+    @Test
+    public void QuickFixWithJsonPrimitiveData() throws Exception {
+        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
+        IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/MissingLeadingSlashServlet.java"));
+        String uri = javaFile.getLocation().toFile().toURI().toString();
+
+        Diagnostic d = d(5, 0, 40,
+                         "URL pattern 'foo/bar' must start with a '/' (unless an extension mapping starting with '*.').",
+                         DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriMissingLeadingSlash", new JsonPrimitive("foo/bar"));
 
         JakartaJavaCodeActionParams codeActionParams = createCodeActionParams(uri, d);
         TextEdit te = te(5, 28, 5, 37, "\"/foo/bar\"");
