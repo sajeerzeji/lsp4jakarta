@@ -121,6 +121,9 @@ public class ServletDiagnosticsParticipant implements IJavaDiagnosticsParticipan
                                                              Constants.DIAGNOSTIC_SOURCE, null,
                                                              ErrorCode.WebServletAnnotationAttributeConflict, DiagnosticSeverity.Error));
                 }
+
+                /* URI path canonicalization checks */
+                ServletUriCanonicalizationValidator.validatePatterns(context, uri, webServletAnnotation, diagnostics);
             }
         }
 
