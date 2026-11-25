@@ -294,17 +294,17 @@ public class ServletUriCanonicalizationValidator {
 
     private static void report(JavaDiagnosticsContext context, String uri, Range range,
                                List<Diagnostic> diagnostics, ErrorCode errorCode,
-                               DiagnosticSeverity severity, String messageKey, Object... args) {
+                               DiagnosticSeverity severity, String messageKey, String pattern) {
         diagnostics.add(context.createDiagnostic(uri,
-                                                 Messages.getMessage(messageKey, args),
-                                                 range, Constants.DIAGNOSTIC_SOURCE, null,
+                                                 Messages.getMessage(messageKey, pattern),
+                                                 range, Constants.DIAGNOSTIC_SOURCE, pattern,
                                                  errorCode, severity));
     }
 
     private static void report(JavaDiagnosticsContext context, String uri, Range range,
                                List<Diagnostic> diagnostics, ErrorCode errorCode,
-                               String messageKey, Object... args) {
-        report(context, uri, range, diagnostics, errorCode, DiagnosticSeverity.Error, messageKey, args);
+                               String messageKey, String pattern) {
+        report(context, uri, range, diagnostics, errorCode, DiagnosticSeverity.Error, messageKey, pattern);
     }
 
     private static boolean containsIgnoreCase(String str, String search) {

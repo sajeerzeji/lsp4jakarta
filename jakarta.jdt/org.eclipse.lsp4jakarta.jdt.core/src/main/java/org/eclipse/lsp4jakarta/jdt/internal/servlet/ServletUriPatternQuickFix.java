@@ -42,6 +42,7 @@ import org.eclipse.lsp4jakarta.jdt.internal.Messages;
 public class ServletUriPatternQuickFix implements IJavaCodeActionParticipant {
 
     private static final Logger LOGGER = Logger.getLogger(ServletUriPatternQuickFix.class.getName());
+    private static final String DATA_PATTERN = "pattern";
 
     @Override
     public String getParticipantId() {
@@ -64,10 +65,9 @@ public class ServletUriPatternQuickFix implements IJavaCodeActionParticipant {
         }
 
         Map<String, Object> extendedData = null;
-        String message = diagnostic.getMessage() != null && diagnostic.getMessage().isLeft() ? diagnostic.getMessage().getLeft() : null;
-        String pattern = extractPattern(message);
+        String pattern = diagnostic.getData() instanceof String s ? s : null;
         if (pattern != null) {
-            extendedData = Collections.singletonMap(Constants.PATTERN, pattern);
+            extendedData = Collections.singletonMap(DATA_PATTERN, pattern);
         }
 
         ExtendedCodeAction codeAction = new ExtendedCodeAction(label);
@@ -96,7 +96,7 @@ public class ServletUriPatternQuickFix implements IJavaCodeActionParticipant {
         }
 
         ASTNode node = context.getCoveredNode();
-        String targetPattern = data.getExtendedDataEntry(Constants.PATTERN) instanceof String s ? s : null;
+        String targetPattern = data.getExtendedDataEntry(DATA_PATTERN) instanceof String s ? s : null;
 
         ChangeCorrectionProposal proposal = new ServletPatternTransformationProposal(label, context.getCompilationUnit(), 0, node, transformer, targetPattern);
 
@@ -106,20 +106,6 @@ public class ServletUriPatternQuickFix implements IJavaCodeActionParticipant {
             LOGGER.log(Level.SEVERE, "Unable to create workspace edit for servlet pattern transformation", e);
         }
         return toResolve;
-    }
-
-    private static String extractPattern(String message) {
-        if (message == null) {
-            return null;
-        }
-        int firstQuote = message.indexOf('\'');
-        if (firstQuote != -1) {
-            int secondQuote = message.indexOf('\'', firstQuote + 1);
-            if (secondQuote != -1) {
-                return message.substring(firstQuote + 1, secondQuote);
-            }
-        }
-        return null;
     }
 
     private static ICodeActionId getCodeActionId(String diagnosticCode) {

@@ -329,7 +329,7 @@ public class JakartaServletTest extends BaseJakartaTest {
 
         Diagnostic d = d(5, 0, 40,
                          "URL pattern 'foo/bar' must start with a '/' (unless an extension mapping starting with '*.').",
-                         DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriMissingLeadingSlash");
+                         DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriMissingLeadingSlash", "foo/bar");
 
         assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d);
 
@@ -362,10 +362,10 @@ public class JakartaServletTest extends BaseJakartaTest {
 
         Diagnostic d1 = d(5, 0, 62,
                           "URL pattern '/foo#fragment' must not contain a fragment identifier ('#').",
-                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsFragment");
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsFragment", "/foo#fragment");
         Diagnostic d2 = d(5, 0, 62,
                           "URL pattern '/bar?query=1' must not contain a query string ('?').",
-                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsQueryString");
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsQueryString", "/bar?query=1");
 
         assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d1, d2);
 
@@ -391,13 +391,13 @@ public class JakartaServletTest extends BaseJakartaTest {
 
         Diagnostic d1 = d(5, 0, 70,
                           "URL pattern '/foo%2Fbar' must not contain an encoded slash ('%2F').",
-                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriEncodedSlash");
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriEncodedSlash", "/foo%2Fbar");
         Diagnostic d2 = d(5, 0, 70,
                           "URL pattern '/foo\\bar' must not contain a backslash character ('\\').",
-                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsBackslash");
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsBackslash", "/foo\\bar");
         Diagnostic d3 = d(5, 0, 70,
                           "URL pattern '/foo%5Cbar' must not contain a backslash character ('\\').",
-                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsBackslash");
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsBackslash", "/foo%5Cbar");
 
         assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d1, d2, d3);
     }
@@ -413,16 +413,16 @@ public class JakartaServletTest extends BaseJakartaTest {
 
         Diagnostic d1 = d(5, 0, 89,
                           "URL pattern '/../foo' must not contain a leading dot-dot segment or resolve above the root.",
-                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriLeadingDotDotSegment");
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriLeadingDotDotSegment", "/../foo");
         Diagnostic d2 = d(5, 0, 89,
                           "URL pattern '/foo/..;/bar' must not contain dot segments with parameters.",
-                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriDotSegmentWithParam");
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriDotSegmentWithParam", "/foo/..;/bar");
         Diagnostic d3 = d(5, 0, 89,
                           "URL pattern '/foo/%2e%2e/bar' must not contain encoded dot segments.",
-                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriEncodedDotSegment");
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriEncodedDotSegment", "/foo/%2e%2e/bar");
         Diagnostic d4 = d(5, 0, 89,
                           "URL pattern '/;/foo/bar' must not contain empty segments with parameters.",
-                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriEmptySegmentWithParam");
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriEmptySegmentWithParam", "/;/foo/bar");
 
         assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d1, d2, d3, d4);
     }
@@ -438,16 +438,16 @@ public class JakartaServletTest extends BaseJakartaTest {
 
         Diagnostic d1 = d(5, 0, 104,
                           "URL pattern '/foo%00/bar' must not contain control characters.",
-                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsControlChar");
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsControlChar", "/foo%00/bar");
         Diagnostic d2 = d(5, 0, 104,
                           "URL pattern '/foo%XX/bar' contains an invalid percent-encoding sequence.",
-                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriInvalidPercentEncoding");
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriInvalidPercentEncoding", "/foo%XX/bar");
         Diagnostic d3 = d(5, 0, 104,
                           "URL pattern '/foo%E2%82/bar' contains a malformed UTF-8 sequence.",
-                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriDecodeError");
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriDecodeError", "/foo%E2%82/bar");
         Diagnostic d4 = d(5, 0, 104,
                           "URL pattern '/foo\t/bar' must not contain control characters.",
-                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsControlChar");
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsControlChar", "/foo\t/bar");
 
         assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d1, d2, d3, d4);
     }
@@ -463,13 +463,13 @@ public class JakartaServletTest extends BaseJakartaTest {
 
         Diagnostic d1 = d(5, 0, 60,
                           "URL pattern '/**' uses '/**', which in Jakarta Servlet is treated as an exact literal path match and does not match sub-paths.",
-                          DiagnosticSeverity.Warning, "jakarta-servlet", "ServletUriSpringGlobPattern");
+                          DiagnosticSeverity.Warning, "jakarta-servlet", "ServletUriSpringGlobPattern", "/**");
         Diagnostic d2 = d(5, 0, 60,
                           "URL pattern '/foo/*/bar' contains an invalid wildcard placement. Wildcards are only permitted as '/*' suffix or '*.' prefix.",
-                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriMisplacedWildcard");
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriMisplacedWildcard", "/foo/*/bar");
         Diagnostic d3 = d(5, 0, 60,
                           "URL pattern '/api/**' uses '/**', which in Jakarta Servlet is treated as an exact literal path match and does not match sub-paths.",
-                          DiagnosticSeverity.Warning, "jakarta-servlet", "ServletUriSpringGlobPattern");
+                          DiagnosticSeverity.Warning, "jakarta-servlet", "ServletUriSpringGlobPattern", "/api/**");
 
         assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d1, d2, d3);
 
