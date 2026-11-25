@@ -75,6 +75,10 @@ public enum JakartaCodeActionId implements ICodeActionId {
     ServletFilterImplementation,
     ServletExtendClass,
     ServletListenerImplementation,
+    ServletPrefixSlashUrlPattern,
+    ServletRemoveFragmentUrlPattern,
+    ServletRemoveQueryStringUrlPattern,
+    ServletReplaceGlobUrlPattern,
     // CDI
     CDIRemoveProducesAndInjectAnnotations,
     CDIInsertInjectAnnotation,
