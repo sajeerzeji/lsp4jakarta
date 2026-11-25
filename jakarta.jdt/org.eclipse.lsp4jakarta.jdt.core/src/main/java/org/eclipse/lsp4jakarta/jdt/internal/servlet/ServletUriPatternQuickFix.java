@@ -14,6 +14,7 @@ package org.eclipse.lsp4jakarta.jdt.internal.servlet;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,8 +22,6 @@ import java.util.logging.Logger;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.dom.ASTNode;
-import org.eclipse.jdt.core.dom.IBinding;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.Diagnostic;
@@ -64,11 +63,18 @@ public class ServletUriPatternQuickFix implements IJavaCodeActionParticipant {
             return Collections.emptyList();
         }
 
+        Map<String, Object> extendedData = null;
+        String message = diagnostic.getMessage() != null && diagnostic.getMessage().isLeft() ? diagnostic.getMessage().getLeft() : null;
+        String pattern = extractPattern(message);
+        if (pattern != null) {
+            extendedData = Collections.singletonMap(Constants.PATTERN, pattern);
+        }
+
         ExtendedCodeAction codeAction = new ExtendedCodeAction(label);
         codeAction.setRelevance(0);
         codeAction.setKind(CodeActionKind.QuickFix);
         codeAction.setDiagnostics(Collections.singletonList(diagnostic));
-        codeAction.setData(new CodeActionResolveData(context.getUri(), getParticipantId(), context.getParams().getRange(), null, context.getParams().isResourceOperationSupported(), context.getParams().isCommandConfigurationUpdateSupported(), id));
+        codeAction.setData(new CodeActionResolveData(context.getUri(), getParticipantId(), context.getParams().getRange(), extendedData, context.getParams().isResourceOperationSupported(), context.getParams().isCommandConfigurationUpdateSupported(), id));
 
         return Collections.singletonList(codeAction);
     }
@@ -90,9 +96,9 @@ public class ServletUriPatternQuickFix implements IJavaCodeActionParticipant {
         }
 
         ASTNode node = context.getCoveredNode();
-        IBinding parentType = getBinding(node);
+        String targetPattern = data.getExtendedDataEntry(Constants.PATTERN) instanceof String s ? s : null;
 
-        ChangeCorrectionProposal proposal = new ServletPatternTransformationProposal(label, context.getCompilationUnit(), context.getASTRoot(), 0, parentType, node, transformer);
+        ChangeCorrectionProposal proposal = new ServletPatternTransformationProposal(label, context.getCompilationUnit(), 0, node, transformer, targetPattern);
 
         try {
             toResolve.setEdit(context.convertToWorkspaceEdit(proposal));
@@ -100,6 +106,20 @@ public class ServletUriPatternQuickFix implements IJavaCodeActionParticipant {
             LOGGER.log(Level.SEVERE, "Unable to create workspace edit for servlet pattern transformation", e);
         }
         return toResolve;
+    }
+
+    private static String extractPattern(String message) {
+        if (message == null) {
+            return null;
+        }
+        int firstQuote = message.indexOf('\'');
+        if (firstQuote != -1) {
+            int secondQuote = message.indexOf('\'', firstQuote + 1);
+            if (secondQuote != -1) {
+                return message.substring(firstQuote + 1, secondQuote);
+            }
+        }
+        return null;
     }
 
     private static ICodeActionId getCodeActionId(String diagnosticCode) {
@@ -142,13 +162,5 @@ public class ServletUriPatternQuickFix implements IJavaCodeActionParticipant {
                                                                         + Constants.PATH_MAPPING_SUFFIX : old;
         }
         return null;
-    }
-
-    @SuppressWarnings("restriction")
-    protected IBinding getBinding(ASTNode node) {
-        if (node.getParent() instanceof TypeDeclaration) {
-            return ((TypeDeclaration) node.getParent()).resolveBinding();
-        }
-        return org.eclipse.jdt.internal.corext.dom.Bindings.getBindingOfParentType(node);
     }
 }

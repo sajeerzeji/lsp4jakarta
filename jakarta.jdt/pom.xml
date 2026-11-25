@@ -83,15 +83,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.eclipse.tycho</groupId>
-                <artifactId>tycho-compiler-plugin</artifactId>
-                <version>${tycho.version}</version>
-                <configuration>
-                    <!-- Compiles against the bundle's required execution environment (JavaSE-21) -->
-                    <useJDK>BREE</useJDK>
-                </configuration>
-            </plugin>
         </plugins>
 		<pluginManagement>
 			<plugins>
@@ -130,15 +121,6 @@
 						(600 seconds) to
                             finish. This depends on speed of VM but current runs are 180s. -->
 						<forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
-					</configuration>
-				</plugin>
-				<plugin>
-					<groupId>org.eclipse.tycho</groupId>
-					<artifactId>tycho-compiler-plugin</artifactId>
-					<version>${tycho.version}</version>
-					<configuration>
-						<source>21</source>
-						<target>21</target>
 					</configuration>
 				</plugin>
 			</plugins>

@@ -474,12 +474,12 @@ public class JakartaServletTest extends BaseJakartaTest {
         assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d1, d2, d3);
 
         JakartaJavaCodeActionParams codeActionParams1 = createCodeActionParams(uri, d1);
-        TextEdit te1 = te(5, 27, 5, 57, "\"/*\", \"/foo/*/bar\", \"/api/*\"");
+        TextEdit te1 = te(5, 27, 5, 32, "\"/*\"");
         CodeAction ca1 = ca(uri, "Replace '/**' with '/*'", d1, te1);
         assertJavaCodeAction(codeActionParams1, IJDT_UTILS, ca1);
 
         JakartaJavaCodeActionParams codeActionParams3 = createCodeActionParams(uri, d3);
-        TextEdit te3 = te(5, 27, 5, 57, "\"/*\", \"/foo/*/bar\", \"/api/*\"");
+        TextEdit te3 = te(5, 48, 5, 57, "\"/api/*\"");
         CodeAction ca3 = ca(uri, "Replace '/**' with '/*'", d3, te3);
         assertJavaCodeAction(codeActionParams3, IJDT_UTILS, ca3);
     }

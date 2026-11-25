@@ -48,6 +48,7 @@ public class Constants {
     public static final String URL_PATTERNS = "urlPatterns";
     public static final String VALUE = "value";
     public static final String SERVLET_NAMES = "servletNames";
+    public static final String PATTERN = "pattern";
 
     /* @DeclareRoles */
     public static final String DECLARE_ROLES_FQ_NAME = "jakarta.annotation.security.DeclareRoles";

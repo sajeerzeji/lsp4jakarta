@@ -20,7 +20,7 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import org.eclipse.jdt.core.IAnnotation;
@@ -85,76 +85,60 @@ public class ServletUriCanonicalizationValidator {
 
         boolean isExtensionMapping = pattern.startsWith(Constants.EXTENSION_MAPPING_PREFIX);
 
-        // 1. Missing leading slash (§3.5.2 Rule 10, §12.2)
+        // §3.5.2 Rejecting Suspicious Sequences: Leading slash / Section 12.2 Mapping Rules
         if (!pattern.startsWith(Constants.FORWARD_SLASH) && !isExtensionMapping) {
-            diagnostics.add(context.createDiagnostic(uri,
-                                                     Messages.getMessage("ServletUriMissingLeadingSlash", pattern),
-                                                     range, Constants.DIAGNOSTIC_SOURCE, null,
-                                                     ErrorCode.ServletUriMissingLeadingSlash, DiagnosticSeverity.Error));
+            report(context, uri, range, diagnostics, ErrorCode.ServletUriMissingLeadingSlash,
+                   "ServletUriMissingLeadingSlash", pattern);
         }
 
-        // 2. Fragment identifier (§3.5.2 Rule 10.1)
+        // §3.5.2 Rejecting Suspicious Sequences: URI Fragment (#)
         if (pattern.contains(Constants.HASH)) {
-            diagnostics.add(context.createDiagnostic(uri,
-                                                     Messages.getMessage("ServletUriContainsFragment", pattern),
-                                                     range, Constants.DIAGNOSTIC_SOURCE, null,
-                                                     ErrorCode.ServletUriContainsFragment, DiagnosticSeverity.Error));
+            report(context, uri, range, diagnostics, ErrorCode.ServletUriContainsFragment,
+                   "ServletUriContainsFragment", pattern);
         }
 
-        // 3. Query string delimiter (§3.5.2 Step 2, §12.2)
+        // §3.5.2 Rejecting Suspicious Sequences: Query String Delimiter (?) / Section 12.2
         if (pattern.contains(Constants.QUESTION_MARK)) {
-            diagnostics.add(context.createDiagnostic(uri,
-                                                     Messages.getMessage("ServletUriContainsQueryString", pattern),
-                                                     range, Constants.DIAGNOSTIC_SOURCE, null,
-                                                     ErrorCode.ServletUriContainsQueryString, DiagnosticSeverity.Error));
+            report(context, uri, range, diagnostics, ErrorCode.ServletUriContainsQueryString,
+                   "ServletUriContainsQueryString", pattern);
         }
 
-        // 4. Backslash character (§3.5.2 Rule 10.9)
+        // §3.5.2 Rejecting Suspicious Sequences: Backslash (\ or %5C)
         if (pattern.contains(Constants.BACKSLASH) || containsIgnoreCase(pattern, "%5c")) {
-            diagnostics.add(context.createDiagnostic(uri,
-                                                     Messages.getMessage("ServletUriContainsBackslash", pattern),
-                                                     range, Constants.DIAGNOSTIC_SOURCE, null,
-                                                     ErrorCode.ServletUriContainsBackslash, DiagnosticSeverity.Error));
+            report(context, uri, range, diagnostics, ErrorCode.ServletUriContainsBackslash,
+                   "ServletUriContainsBackslash", pattern);
         }
 
-        // 5. Encoded slash (§3.5.2 Rule 10.4)
+        // §3.5.2 Rejecting Suspicious Sequences: Encoded Forward Slash (%2F)
         if (containsIgnoreCase(pattern, "%2f")) {
-            diagnostics.add(context.createDiagnostic(uri,
-                                                     Messages.getMessage("ServletUriEncodedSlash", pattern),
-                                                     range, Constants.DIAGNOSTIC_SOURCE, null,
-                                                     ErrorCode.ServletUriEncodedSlash, DiagnosticSeverity.Error));
+            report(context, uri, range, diagnostics, ErrorCode.ServletUriEncodedSlash,
+                   "ServletUriEncodedSlash", pattern);
         }
 
         boolean reportedControlChar = false;
-        // 6. Control characters (raw in string) (§3.5.2 Rule 10.10)
+        // §3.5.2 Rejecting Suspicious Sequences: Encoded and Raw Control Characters
         if (hasRawControlCharacters(pattern)) {
-            diagnostics.add(context.createDiagnostic(uri,
-                                                     Messages.getMessage("ServletUriContainsControlChar", pattern),
-                                                     range, Constants.DIAGNOSTIC_SOURCE, null,
-                                                     ErrorCode.ServletUriContainsControlChar, DiagnosticSeverity.Error));
+            report(context, uri, range, diagnostics, ErrorCode.ServletUriContainsControlChar,
+                   "ServletUriContainsControlChar", pattern);
             reportedControlChar = true;
         }
 
-        // 7. Invalid percent-encoding & UTF-8 decoding (§3.5.2 Rules 10.10, 10.11, 10.12)
+        // §3.5.2 Rejecting Suspicious Sequences: Invalid Percent-Encoding & UTF-8 Decoding Errors
         validatePercentEncodingAndDecodedContent(context, uri, pattern, range, diagnostics, reportedControlChar);
 
-        // 8. Spring/Ant glob /** pattern (§12.2)
+        // Section 12.2: Spring Glob Pattern (/**)
         if (pattern.contains(Constants.SPRING_GLOB_PATTERN)) {
-            diagnostics.add(context.createDiagnostic(uri,
-                                                     Messages.getMessage("ServletUriSpringGlobPattern", pattern),
-                                                     range, Constants.DIAGNOSTIC_SOURCE, null,
-                                                     ErrorCode.ServletUriSpringGlobPattern, DiagnosticSeverity.Warning));
+            report(context, uri, range, diagnostics, ErrorCode.ServletUriSpringGlobPattern,
+                   DiagnosticSeverity.Warning, "ServletUriSpringGlobPattern", pattern);
         }
 
-        // 9. Misplaced wildcards (§12.2)
+        // Section 12.2: Misplaced Wildcard (*)
         if (hasMisplacedWildcard(pattern)) {
-            diagnostics.add(context.createDiagnostic(uri,
-                                                     Messages.getMessage("ServletUriMisplacedWildcard", pattern),
-                                                     range, Constants.DIAGNOSTIC_SOURCE, null,
-                                                     ErrorCode.ServletUriMisplacedWildcard, DiagnosticSeverity.Error));
+            report(context, uri, range, diagnostics, ErrorCode.ServletUriMisplacedWildcard,
+                   "ServletUriMisplacedWildcard", pattern);
         }
 
-        // 10. Segment-level analysis (§3.5.2 Rules 10.3, 10.5, 10.6, 10.8)
+        // §3.5.2 Rejecting Suspicious Sequences: Segment-level analysis
         validateSegments(context, uri, pattern, range, diagnostics);
     }
 
@@ -177,10 +161,8 @@ public class ServletUriCanonicalizationValidator {
         }
 
         if (INVALID_PERCENT_PATTERN.matcher(pattern).find()) {
-            diagnostics.add(context.createDiagnostic(uri,
-                                                     Messages.getMessage("ServletUriInvalidPercentEncoding", pattern),
-                                                     range, Constants.DIAGNOSTIC_SOURCE, null,
-                                                     ErrorCode.ServletUriInvalidPercentEncoding, DiagnosticSeverity.Error));
+            report(context, uri, range, diagnostics, ErrorCode.ServletUriInvalidPercentEncoding,
+                   "ServletUriInvalidPercentEncoding", pattern);
             return;
         }
 
@@ -208,16 +190,12 @@ public class ServletUriCanonicalizationValidator {
 
             // Check if decoded content has control characters (if not already reported on raw pattern)
             if (!alreadyReportedControlChar && hasRawControlCharacters(decoded)) {
-                diagnostics.add(context.createDiagnostic(uri,
-                                                         Messages.getMessage("ServletUriContainsControlChar", pattern),
-                                                         range, Constants.DIAGNOSTIC_SOURCE, null,
-                                                         ErrorCode.ServletUriContainsControlChar, DiagnosticSeverity.Error));
+                report(context, uri, range, diagnostics, ErrorCode.ServletUriContainsControlChar,
+                       "ServletUriContainsControlChar", pattern);
             }
         } catch (CharacterCodingException | IllegalArgumentException e) {
-            diagnostics.add(context.createDiagnostic(uri,
-                                                     Messages.getMessage("ServletUriDecodeError", pattern),
-                                                     range, Constants.DIAGNOSTIC_SOURCE, null,
-                                                     ErrorCode.ServletUriDecodeError, DiagnosticSeverity.Error));
+            report(context, uri, range, diagnostics, ErrorCode.ServletUriDecodeError,
+                   "ServletUriDecodeError", pattern);
         }
     }
 
@@ -265,16 +243,14 @@ public class ServletUriCanonicalizationValidator {
             String seg = rawSegments[i];
             boolean isLast = (i == rawSegments.length - 1);
 
-            // Empty segment with parameters (e.g. /;/ or /;param/ when not the last segment)
+            // §3.5.2 Rejecting Suspicious Sequences: Empty segment with parameters (/;/ or /;param/)
             if (!isLast && seg.startsWith(Constants.SEMICOLON) && !reportedEmptyWithParam) {
-                diagnostics.add(context.createDiagnostic(uri,
-                                                         Messages.getMessage("ServletUriEmptySegmentWithParam", pattern),
-                                                         range, Constants.DIAGNOSTIC_SOURCE, null,
-                                                         ErrorCode.ServletUriEmptySegmentWithParam, DiagnosticSeverity.Error));
+                report(context, uri, range, diagnostics, ErrorCode.ServletUriEmptySegmentWithParam,
+                       "ServletUriEmptySegmentWithParam", pattern);
                 reportedEmptyWithParam = true;
             }
 
-            // Dot segment with parameters (/..;/ or /.;/)
+            // §3.5.2 Rejecting Suspicious Sequences: Dot segments with parameters (/..;/ or /.;/)
             int semicolonIdx = seg.indexOf(';');
             String segBeforeParam = semicolonIdx != -1 ? seg.substring(0, semicolonIdx) : seg;
             String segBeforeParamDecoded = segBeforeParam.replaceAll("(?i)%2e", ".");
@@ -283,35 +259,29 @@ public class ServletUriCanonicalizationValidator {
                 if ((".".equals(segBeforeParam) || "..".equals(segBeforeParam)
                      || ".".equals(segBeforeParamDecoded) || "..".equals(segBeforeParamDecoded))
                     && !reportedDotWithParam) {
-                    diagnostics.add(context.createDiagnostic(uri,
-                                                             Messages.getMessage("ServletUriDotSegmentWithParam", pattern),
-                                                             range, Constants.DIAGNOSTIC_SOURCE, null,
-                                                             ErrorCode.ServletUriDotSegmentWithParam, DiagnosticSeverity.Error));
+                    report(context, uri, range, diagnostics, ErrorCode.ServletUriDotSegmentWithParam,
+                           "ServletUriDotSegmentWithParam", pattern);
                     reportedDotWithParam = true;
                 }
             }
 
-            // Encoded dot segment (/%2e/ or /%2e%2e/)
+            // §3.5.2 Rejecting Suspicious Sequences: Encoded dot segment (/%2e/ or /%2e%2e/)
             if (ENCODED_DOT_PATTERN.matcher(segBeforeParam).find()
                 && (".".equals(segBeforeParamDecoded) || "..".equals(segBeforeParamDecoded))
                 && !reportedEncodedDot) {
-                diagnostics.add(context.createDiagnostic(uri,
-                                                         Messages.getMessage("ServletUriEncodedDotSegment", pattern),
-                                                         range, Constants.DIAGNOSTIC_SOURCE, null,
-                                                         ErrorCode.ServletUriEncodedDotSegment, DiagnosticSeverity.Error));
+                report(context, uri, range, diagnostics, ErrorCode.ServletUriEncodedDotSegment,
+                       "ServletUriEncodedDotSegment", pattern);
                 reportedEncodedDot = true;
             }
 
-            // Path normalization check (Leading dot-dot or normalizing above root)
+            // §3.5.2 Rejecting Suspicious Sequences: Traversing above root (/../)
             if (".".equals(segBeforeParamDecoded)) {
                 // remove dot segment
                 continue;
             } else if ("..".equals(segBeforeParamDecoded)) {
                 if (normalizedStack.isEmpty() && !reportedLeadingDotDot) {
-                    diagnostics.add(context.createDiagnostic(uri,
-                                                             Messages.getMessage("ServletUriLeadingDotDotSegment", pattern),
-                                                             range, Constants.DIAGNOSTIC_SOURCE, null,
-                                                             ErrorCode.ServletUriLeadingDotDotSegment, DiagnosticSeverity.Error));
+                    report(context, uri, range, diagnostics, ErrorCode.ServletUriLeadingDotDotSegment,
+                           "ServletUriLeadingDotDotSegment", pattern);
                     reportedLeadingDotDot = true;
                 } else if (!normalizedStack.isEmpty()) {
                     normalizedStack.remove(normalizedStack.size() - 1);
@@ -322,10 +292,25 @@ public class ServletUriCanonicalizationValidator {
         }
     }
 
+    private static void report(JavaDiagnosticsContext context, String uri, Range range,
+                               List<Diagnostic> diagnostics, ErrorCode errorCode,
+                               DiagnosticSeverity severity, String messageKey, Object... args) {
+        diagnostics.add(context.createDiagnostic(uri,
+                                                 Messages.getMessage(messageKey, args),
+                                                 range, Constants.DIAGNOSTIC_SOURCE, null,
+                                                 errorCode, severity));
+    }
+
+    private static void report(JavaDiagnosticsContext context, String uri, Range range,
+                               List<Diagnostic> diagnostics, ErrorCode errorCode,
+                               String messageKey, Object... args) {
+        report(context, uri, range, diagnostics, errorCode, DiagnosticSeverity.Error, messageKey, args);
+    }
+
     private static boolean containsIgnoreCase(String str, String search) {
         if (str == null || search == null) {
             return false;
         }
-        return str.toLowerCase().contains(search.toLowerCase());
+        return str.toLowerCase(Locale.ROOT).contains(search.toLowerCase(Locale.ROOT));
     }
 }

@@ -18,9 +18,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ArrayInitializer;
-import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
-import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.MemberValuePair;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
 import org.eclipse.jdt.core.dom.SingleMemberAnnotation;
@@ -36,13 +34,16 @@ public class ServletPatternTransformationProposal extends ASTRewriteCorrectionPr
 
     private final ASTNode annotationNode;
     private final UnaryOperator<String> transformer;
+    private final String targetPattern;
 
-    public ServletPatternTransformationProposal(String label, ICompilationUnit cu, CompilationUnit invocationNode,
-                                                int relevance, IBinding binding, ASTNode annotationNode,
-                                                UnaryOperator<String> transformer) {
+    public ServletPatternTransformationProposal(String label, ICompilationUnit cu,
+                                                int relevance, ASTNode annotationNode,
+                                                UnaryOperator<String> transformer,
+                                                String targetPattern) {
         super(label, CodeActionKind.QuickFix, cu, null, relevance);
         this.annotationNode = annotationNode;
         this.transformer = transformer;
+        this.targetPattern = targetPattern;
     }
 
     /**
@@ -73,21 +74,25 @@ public class ServletPatternTransformationProposal extends ASTRewriteCorrectionPr
                                      ASTNode parent, org.eclipse.jdt.core.dom.StructuralPropertyDescriptor property) {
         if (expr instanceof StringLiteral oldLiteral) {
             String oldValue = oldLiteral.getLiteralValue();
-            String newValue = transformer.apply(oldValue);
-            if (!newValue.equals(oldValue)) {
-                StringLiteral newLiteral = ast.newStringLiteral();
-                newLiteral.setLiteralValue(newValue);
-                rewrite.set(parent, property, newLiteral, null);
+            if (targetPattern == null || targetPattern.equals(oldValue)) {
+                String newValue = transformer.apply(oldValue);
+                if (!newValue.equals(oldValue)) {
+                    StringLiteral newLiteral = ast.newStringLiteral();
+                    newLiteral.setLiteralValue(newValue);
+                    rewrite.set(parent, property, newLiteral, null);
+                }
             }
         } else if (expr instanceof ArrayInitializer arrayInit) {
             for (Object elem : arrayInit.expressions()) {
                 if (elem instanceof StringLiteral oldLiteral) {
                     String oldValue = oldLiteral.getLiteralValue();
-                    String newValue = transformer.apply(oldValue);
-                    if (!newValue.equals(oldValue)) {
-                        StringLiteral newLiteral = ast.newStringLiteral();
-                        newLiteral.setLiteralValue(newValue);
-                        rewrite.replace(oldLiteral, newLiteral, null);
+                    if (targetPattern == null || targetPattern.equals(oldValue)) {
+                        String newValue = transformer.apply(oldValue);
+                        if (!newValue.equals(oldValue)) {
+                            StringLiteral newLiteral = ast.newStringLiteral();
+                            newLiteral.setLiteralValue(newValue);
+                            rewrite.replace(oldLiteral, newLiteral, null);
+                        }
                     }
                 }
             }
