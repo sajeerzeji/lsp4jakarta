@@ -55,4 +55,15 @@ public class Constants {
 
     /* Diagnostics fields constants */
     public static final String DIAGNOSTIC_SOURCE = "jakarta-servlet";
+
+    /* URI Path Canonicalization Constants */
+    public static final String FORWARD_SLASH = "/";
+    public static final String PERCENT = "%";
+    public static final String BACKSLASH = "\\";
+    public static final String HASH = "#";
+    public static final String QUESTION_MARK = "?";
+    public static final String SEMICOLON = ";";
+    public static final String EXTENSION_MAPPING_PREFIX = "*.";
+    public static final String SPRING_GLOB_PATTERN = "/**";
+    public static final String PATH_MAPPING_SUFFIX = "/*";
 }
