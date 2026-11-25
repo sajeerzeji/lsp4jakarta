@@ -380,7 +380,21 @@
       <codeAction kind="quickfix"
                   targetDiagnostic="jakarta-servlet#DeclareRolesOnNonServletClass"
                   class="org.eclipse.lsp4jakarta.jdt.internal.servlet.InsertExtendsClauseToExtendHttpServletQuickFix" />
-   </extension>
+
+      <!-- URI Path Canonicalization Quick Fixes -->
+      <codeAction kind="quickfix"
+                  targetDiagnostic="jakarta-servlet#ServletUriMissingLeadingSlash"
+                  class="org.eclipse.lsp4jakarta.jdt.internal.servlet.PrefixSlashServletPatternQuickFix" />
+      <codeAction kind="quickfix"
+                  targetDiagnostic="jakarta-servlet#ServletUriContainsFragment"
+                  class="org.eclipse.lsp4jakarta.jdt.internal.servlet.RemoveUriFragmentQuickFix" />
+      <codeAction kind="quickfix"
+                  targetDiagnostic="jakarta-servlet#ServletUriContainsQueryString"
+                  class="org.eclipse.lsp4jakarta.jdt.internal.servlet.RemoveUriQueryStringQuickFix" />
+      <codeAction kind="quickfix"
+                  targetDiagnostic="jakarta-servlet#ServletUriSpringGlobPattern"
+                  class="org.eclipse.lsp4jakarta.jdt.internal.servlet.ReplaceGlobPatternQuickFix" />
+  </extension>
    
    <!-- EJB -->
    <extension point="org.eclipse.lsp4jakarta.jdt.core.javaFeatureParticipants">
