@@ -19,7 +19,6 @@ import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -68,7 +67,7 @@ public class ServletUriPatternQuickFix implements IJavaCodeActionParticipant {
 
         Map<String, Object> extendedData = null;
         Object raw = diagnostic.getData();
-        String pattern = raw instanceof JsonPrimitive p ? p.getAsString() : raw instanceof String s ? s : raw instanceof JsonElement e ? e.getAsString() : null;
+        String pattern = raw instanceof JsonPrimitive p && p.isString() ? p.getAsString() : raw instanceof String s ? s : null;
         if (pattern != null) {
             extendedData = Collections.singletonMap(DATA_PATTERN, pattern);
         }

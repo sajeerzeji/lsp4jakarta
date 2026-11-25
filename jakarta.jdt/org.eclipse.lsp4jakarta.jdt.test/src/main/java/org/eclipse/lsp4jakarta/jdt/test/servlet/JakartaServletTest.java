@@ -343,16 +343,16 @@ public class JakartaServletTest extends BaseJakartaTest {
     @Test
     public void QuickFixWithJsonPrimitiveData() throws Exception {
         IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
-        IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/MissingLeadingSlashServlet.java"));
+        IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/WildcardAndGlobFilter.java"));
         String uri = javaFile.getLocation().toFile().toURI().toString();
 
-        Diagnostic d = d(5, 0, 40,
-                         "URL pattern 'foo/bar' must start with a '/' (unless an extension mapping starting with '*.').",
-                         DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriMissingLeadingSlash", new JsonPrimitive("foo/bar"));
+        Diagnostic d = d(5, 0, 60,
+                         "URL pattern '/api/**' uses '/**', which in Jakarta Servlet is treated as an exact literal path match and does not match sub-paths.",
+                         DiagnosticSeverity.Warning, "jakarta-servlet", "ServletUriSpringGlobPattern", new JsonPrimitive("/api/**"));
 
         JakartaJavaCodeActionParams codeActionParams = createCodeActionParams(uri, d);
-        TextEdit te = te(5, 28, 5, 37, "\"/foo/bar\"");
-        CodeAction ca = ca(uri, "Add leading '/' to URL pattern", d, te);
+        TextEdit te = te(5, 48, 5, 57, "\"/api/*\"");
+        CodeAction ca = ca(uri, "Replace '/**' with '/*'", d, te);
         assertJavaCodeAction(codeActionParams, IJDT_UTILS, ca);
     }
 
