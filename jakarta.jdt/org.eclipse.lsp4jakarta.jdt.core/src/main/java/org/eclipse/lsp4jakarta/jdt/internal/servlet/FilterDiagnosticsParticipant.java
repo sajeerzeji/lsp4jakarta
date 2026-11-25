@@ -111,6 +111,9 @@ public class FilterDiagnosticsParticipant implements IJavaDiagnosticsParticipant
                                                              Constants.DIAGNOSTIC_SOURCE, null,
                                                              ErrorCode.WebFilterAnnotationAttributeConflict, DiagnosticSeverity.Error));
                 }
+
+                /* URI path canonicalization checks */
+                ServletUriCanonicalizationValidator.validatePatterns(context, uri, webFilterAnnotation, diagnostics);
             }
         }
 
