@@ -138,7 +138,8 @@ public class ServletUriPatternQuickFix implements IJavaCodeActionParticipant {
         } else if (JakartaCodeActionId.ServletRemoveQueryStringUrlPattern.getId().equals(actionId)) {
             return old -> old.contains(Constants.QUESTION_MARK) ? old.substring(0, old.indexOf(Constants.QUESTION_MARK)) : old;
         } else if (JakartaCodeActionId.ServletReplaceGlobUrlPattern.getId().equals(actionId)) {
-            return old -> Constants.SPRING_GLOB_PATTERN.equals(old) ? Constants.PATH_MAPPING_SUFFIX : old;
+            return old -> old.endsWith(Constants.SPRING_GLOB_PATTERN) ? old.substring(0, old.length() - Constants.SPRING_GLOB_PATTERN.length())
+                                                                        + Constants.PATH_MAPPING_SUFFIX : old;
         }
         return null;
     }

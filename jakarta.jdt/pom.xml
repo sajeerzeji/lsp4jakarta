@@ -88,8 +88,8 @@
                 <artifactId>tycho-compiler-plugin</artifactId>
                 <version>${tycho.version}</version>
                 <configuration>
-                    <source>21</source>
-                    <target>21</target>
+                    <!-- Compiles against the bundle's required execution environment (JavaSE-21) -->
+                    <useJDK>BREE</useJDK>
                 </configuration>
             </plugin>
         </plugins>

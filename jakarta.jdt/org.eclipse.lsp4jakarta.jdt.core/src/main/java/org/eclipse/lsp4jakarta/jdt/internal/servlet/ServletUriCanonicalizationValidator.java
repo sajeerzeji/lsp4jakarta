@@ -125,16 +125,18 @@ public class ServletUriCanonicalizationValidator {
                                                      ErrorCode.ServletUriEncodedSlash, DiagnosticSeverity.Error));
         }
 
+        boolean reportedControlChar = false;
         // 6. Control characters (raw in string) (§3.5.2 Rule 10.10)
         if (hasRawControlCharacters(pattern)) {
             diagnostics.add(context.createDiagnostic(uri,
                                                      Messages.getMessage("ServletUriContainsControlChar", pattern),
                                                      range, Constants.DIAGNOSTIC_SOURCE, null,
                                                      ErrorCode.ServletUriContainsControlChar, DiagnosticSeverity.Error));
+            reportedControlChar = true;
         }
 
         // 7. Invalid percent-encoding & UTF-8 decoding (§3.5.2 Rules 10.10, 10.11, 10.12)
-        validatePercentEncodingAndDecodedContent(context, uri, pattern, range, diagnostics);
+        validatePercentEncodingAndDecodedContent(context, uri, pattern, range, diagnostics, reportedControlChar);
 
         // 8. Spring/Ant glob /** pattern (§12.2)
         if (pattern.contains(Constants.SPRING_GLOB_PATTERN)) {
@@ -159,7 +161,7 @@ public class ServletUriCanonicalizationValidator {
     private static boolean hasRawControlCharacters(String s) {
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
-            if ((c < 0x20 && c != '\t') || c == 0x7F) {
+            if (c < 0x20 || c == 0x7F) {
                 return true;
             }
         }
@@ -168,7 +170,8 @@ public class ServletUriCanonicalizationValidator {
 
     private static void validatePercentEncodingAndDecodedContent(JavaDiagnosticsContext context, String uri,
                                                                  String pattern, Range range,
-                                                                 List<Diagnostic> diagnostics) {
+                                                                 List<Diagnostic> diagnostics,
+                                                                 boolean alreadyReportedControlChar) {
         if (!pattern.contains(Constants.PERCENT)) {
             return;
         }
@@ -192,7 +195,8 @@ public class ServletUriCanonicalizationValidator {
                     buffer.write(b);
                     i += 3;
                 } else {
-                    buffer.write((byte) c);
+                    byte[] charBytes = String.valueOf(c).getBytes(StandardCharsets.UTF_8);
+                    buffer.write(charBytes, 0, charBytes.length);
                     i++;
                 }
             }
@@ -202,8 +206,8 @@ public class ServletUriCanonicalizationValidator {
             decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
             String decoded = decoder.decode(ByteBuffer.wrap(bytes)).toString();
 
-            // Check if decoded content has control characters
-            if (hasRawControlCharacters(decoded)) {
+            // Check if decoded content has control characters (if not already reported on raw pattern)
+            if (!alreadyReportedControlChar && hasRawControlCharacters(decoded)) {
                 diagnostics.add(context.createDiagnostic(uri,
                                                          Messages.getMessage("ServletUriContainsControlChar", pattern),
                                                          range, Constants.DIAGNOSTIC_SOURCE, null,

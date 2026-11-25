@@ -436,17 +436,20 @@ public class JakartaServletTest extends BaseJakartaTest {
         JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
         diagnosticsParams.setUris(Arrays.asList(uri));
 
-        Diagnostic d1 = d(5, 0, 77,
+        Diagnostic d1 = d(5, 0, 104,
                           "URL pattern '/foo%00/bar' must not contain control characters.",
                           DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsControlChar");
-        Diagnostic d2 = d(5, 0, 77,
+        Diagnostic d2 = d(5, 0, 104,
                           "URL pattern '/foo%XX/bar' contains an invalid percent-encoding sequence.",
                           DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriInvalidPercentEncoding");
-        Diagnostic d3 = d(5, 0, 77,
+        Diagnostic d3 = d(5, 0, 104,
                           "URL pattern '/foo%E2%82/bar' contains a malformed UTF-8 sequence.",
                           DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriDecodeError");
+        Diagnostic d4 = d(5, 0, 104,
+                          "URL pattern '/foo\t/bar' must not contain control characters.",
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsControlChar");
 
-        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d1, d2, d3);
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d1, d2, d3, d4);
     }
 
     @Test
@@ -458,18 +461,26 @@ public class JakartaServletTest extends BaseJakartaTest {
         JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
         diagnosticsParams.setUris(Arrays.asList(uri));
 
-        Diagnostic d1 = d(5, 0, 49,
-                          "URL pattern '/**' uses '/**', which in Jakarta Servlet matches a literal directory named '*' rather than recursively matching.",
+        Diagnostic d1 = d(5, 0, 60,
+                          "URL pattern '/**' uses '/**', which in Jakarta Servlet is treated as an exact literal path match and does not match sub-paths.",
                           DiagnosticSeverity.Warning, "jakarta-servlet", "ServletUriSpringGlobPattern");
-        Diagnostic d2 = d(5, 0, 49,
+        Diagnostic d2 = d(5, 0, 60,
                           "URL pattern '/foo/*/bar' contains an invalid wildcard placement. Wildcards are only permitted as '/*' suffix or '*.' prefix.",
                           DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriMisplacedWildcard");
+        Diagnostic d3 = d(5, 0, 60,
+                          "URL pattern '/api/**' uses '/**', which in Jakarta Servlet is treated as an exact literal path match and does not match sub-paths.",
+                          DiagnosticSeverity.Warning, "jakarta-servlet", "ServletUriSpringGlobPattern");
 
-        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d1, d2);
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d1, d2, d3);
 
         JakartaJavaCodeActionParams codeActionParams1 = createCodeActionParams(uri, d1);
-        TextEdit te1 = te(5, 27, 5, 32, "\"/*\"");
+        TextEdit te1 = te(5, 27, 5, 57, "\"/*\", \"/foo/*/bar\", \"/api/*\"");
         CodeAction ca1 = ca(uri, "Replace '/**' with '/*'", d1, te1);
         assertJavaCodeAction(codeActionParams1, IJDT_UTILS, ca1);
+
+        JakartaJavaCodeActionParams codeActionParams3 = createCodeActionParams(uri, d3);
+        TextEdit te3 = te(5, 27, 5, 57, "\"/*\", \"/foo/*/bar\", \"/api/*\"");
+        CodeAction ca3 = ca(uri, "Replace '/**' with '/*'", d3, te3);
+        assertJavaCodeAction(codeActionParams3, IJDT_UTILS, ca3);
     }
 }
