@@ -384,16 +384,16 @@
       <!-- URI Path Canonicalization Quick Fixes -->
       <codeAction kind="quickfix"
                   targetDiagnostic="jakarta-servlet#ServletUriMissingLeadingSlash"
-                  class="org.eclipse.lsp4jakarta.jdt.internal.servlet.PrefixSlashServletPatternQuickFix" />
+                  class="org.eclipse.lsp4jakarta.jdt.internal.servlet.ServletUriPatternQuickFix" />
       <codeAction kind="quickfix"
                   targetDiagnostic="jakarta-servlet#ServletUriContainsFragment"
-                  class="org.eclipse.lsp4jakarta.jdt.internal.servlet.RemoveUriFragmentQuickFix" />
+                  class="org.eclipse.lsp4jakarta.jdt.internal.servlet.ServletUriPatternQuickFix" />
       <codeAction kind="quickfix"
                   targetDiagnostic="jakarta-servlet#ServletUriContainsQueryString"
-                  class="org.eclipse.lsp4jakarta.jdt.internal.servlet.RemoveUriQueryStringQuickFix" />
+                  class="org.eclipse.lsp4jakarta.jdt.internal.servlet.ServletUriPatternQuickFix" />
       <codeAction kind="quickfix"
                   targetDiagnostic="jakarta-servlet#ServletUriSpringGlobPattern"
-                  class="org.eclipse.lsp4jakarta.jdt.internal.servlet.ReplaceGlobPatternQuickFix" />
+                  class="org.eclipse.lsp4jakarta.jdt.internal.servlet.ServletUriPatternQuickFix" />
   </extension>
    
    <!-- EJB -->
