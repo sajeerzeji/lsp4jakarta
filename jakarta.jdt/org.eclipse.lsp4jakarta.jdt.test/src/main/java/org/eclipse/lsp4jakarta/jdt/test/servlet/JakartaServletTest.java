@@ -369,6 +369,27 @@ public class JakartaServletTest extends BaseJakartaTest {
     }
 
     @Test
+    public void ConstantReferenceServlet() throws Exception {
+        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
+        IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/ConstantReferenceServlet.java"));
+        String uri = javaFile.getLocation().toFile().toURI().toString();
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        // Constants are validated by their resolved value: "/api" and "/api" + "/v1" are valid, "api" is not
+        Diagnostic d = d(5, 0, 150,
+                         "URL pattern 'api' must start with a '/' (unless an extension mapping starting with '*.').",
+                         DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriMissingLeadingSlash", "api");
+
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d);
+
+        // The offending value lives in a constant, not in a string literal, so there is nothing to rewrite
+        JakartaJavaCodeActionParams codeActionParams = createCodeActionParams(uri, d);
+        assertJavaCodeAction(codeActionParams, IJDT_UTILS);
+    }
+
+    @Test
     public void FragmentAndQueryServlet() throws Exception {
         IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
         IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/FragmentAndQueryServlet.java"));

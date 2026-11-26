@@ -24,13 +24,24 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 import org.eclipse.jdt.core.IAnnotation;
+import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IMemberValuePair;
+import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.Annotation;
+import org.eclipse.jdt.core.dom.ArrayInitializer;
+import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.MemberValuePair;
+import org.eclipse.jdt.core.dom.NodeFinder;
+import org.eclipse.jdt.core.dom.NormalAnnotation;
+import org.eclipse.jdt.core.dom.SingleMemberAnnotation;
+import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4jakarta.jdt.core.java.diagnostics.JavaDiagnosticsContext;
 import org.eclipse.lsp4jakarta.jdt.core.utils.PositionUtils;
-import org.eclipse.lsp4jakarta.jdt.internal.DiagnosticUtils;
 import org.eclipse.lsp4jakarta.jdt.internal.Messages;
 
 /**
@@ -55,12 +66,7 @@ public class ServletUriCanonicalizationValidator {
     public static void validatePatterns(JavaDiagnosticsContext context, String uri,
                                         IAnnotation annotation, List<Diagnostic> diagnostics) throws JavaModelException {
 
-        List<String> urlPatterns = DiagnosticUtils.getAnnotationMemberValues(annotation, Constants.URL_PATTERNS, String.class);
-        List<String> values = DiagnosticUtils.getAnnotationMemberValues(annotation, Constants.VALUE, String.class);
-
-        List<String> allPatterns = new ArrayList<>();
-        allPatterns.addAll(urlPatterns);
-        allPatterns.addAll(values);
+        List<String> allPatterns = getPatternValues(context, annotation);
 
         if (allPatterns.isEmpty()) {
             return;
@@ -71,6 +77,98 @@ public class ServletUriCanonicalizationValidator {
         for (String pattern : allPatterns) {
             validateSinglePattern(context, uri, pattern, range, diagnostics);
         }
+    }
+
+    /**
+     * Collects the URL patterns declared in the {@code urlPatterns} and {@code value} members.
+     *
+     * <p>Values are resolved through the AST so that compile-time constants
+     * (e.g. {@code Paths.API} or {@code Paths.API + "/v1"}) are validated by their value.
+     * The Java model cannot be used for this: it reports a constant reference as a
+     * {@code String} holding the expression text, not the constant's value.</p>
+     *
+     * <p>If the annotation node cannot be located, only the plain string literals reported by
+     * the Java model are returned.</p>
+     */
+    private static List<String> getPatternValues(JavaDiagnosticsContext context,
+                                                 IAnnotation annotation) throws JavaModelException {
+        Annotation node = findAnnotationNode(context, annotation);
+        if (node == null) {
+            return getStringLiteralValues(annotation);
+        }
+
+        List<String> patterns = new ArrayList<>();
+        if (node instanceof SingleMemberAnnotation single) {
+            collectPatterns(single.getValue(), patterns);
+        } else if (node instanceof NormalAnnotation normal) {
+            for (Object obj : normal.values()) {
+                if (obj instanceof MemberValuePair pair) {
+                    String name = pair.getName().getIdentifier();
+                    if (Constants.URL_PATTERNS.equals(name) || Constants.VALUE.equals(name)) {
+                        collectPatterns(pair.getValue(), patterns);
+                    }
+                }
+            }
+        }
+        return patterns;
+    }
+
+    /**
+     * Adds the String value of the expression, or of each element if it is an array initializer.
+     * Expressions that are not String compile-time constants are skipped.
+     */
+    private static void collectPatterns(Expression expr, List<String> patterns) {
+        if (expr instanceof ArrayInitializer array) {
+            for (Object element : array.expressions()) {
+                collectPatterns((Expression) element, patterns);
+            }
+        } else if (expr instanceof StringLiteral literal) {
+            patterns.add(literal.getLiteralValue());
+        } else if (expr != null && expr.resolveConstantExpressionValue() instanceof String value) {
+            patterns.add(value);
+        }
+    }
+
+    private static Annotation findAnnotationNode(JavaDiagnosticsContext context,
+                                                 IAnnotation annotation) throws JavaModelException {
+        if (!(context.getTypeRoot() instanceof ICompilationUnit)) {
+            return null;
+        }
+        ISourceRange range = annotation.getSourceRange();
+        if (range == null || range.getOffset() < 0) {
+            return null;
+        }
+        ASTNode node = NodeFinder.perform(context.getASTRoot(), range.getOffset(), range.getLength());
+        while (node != null && !(node instanceof Annotation)) {
+            node = node.getParent();
+        }
+        return (Annotation) node;
+    }
+
+    /**
+     * Fallback that returns the plain string literals reported by the Java model. Only
+     * {@link IMemberValuePair#K_STRING} values are accepted because the model reports
+     * constant references as {@code String}s holding the expression text.
+     */
+    private static List<String> getStringLiteralValues(IAnnotation annotation) throws JavaModelException {
+        List<String> result = new ArrayList<>();
+        for (IMemberValuePair pair : annotation.getMemberValuePairs()) {
+            String name = pair.getMemberName();
+            if ((Constants.URL_PATTERNS.equals(name) || Constants.VALUE.equals(name))
+                && pair.getValueKind() == IMemberValuePair.K_STRING) {
+                Object value = pair.getValue();
+                if (value instanceof Object[] array) {
+                    for (Object item : array) {
+                        if (item instanceof String s) {
+                            result.add(s);
+                        }
+                    }
+                } else if (value instanceof String s) {
+                    result.add(s);
+                }
+            }
+        }
+        return result;
     }
 
     /**

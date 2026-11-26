@@ -69,6 +69,10 @@ public class ServletUriPatternQuickFix implements IJavaCodeActionParticipant {
         Object raw = diagnostic.getData();
         String pattern = raw instanceof JsonPrimitive p && p.isString() ? p.getAsString() : raw instanceof String s ? s : null;
         if (pattern != null) {
+            // A pattern held in a constant has no string literal to rewrite, so no fix is offered
+            if (!ServletPatternTransformationProposal.hasLiteral(context.getCoveredNode(), pattern)) {
+                return Collections.emptyList();
+            }
             extendedData = Collections.singletonMap(DATA_PATTERN, pattern);
         }
 

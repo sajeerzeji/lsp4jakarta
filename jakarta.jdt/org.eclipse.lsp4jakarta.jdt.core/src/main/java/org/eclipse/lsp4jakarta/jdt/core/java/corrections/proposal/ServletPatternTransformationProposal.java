@@ -47,6 +47,45 @@ public class ServletPatternTransformationProposal extends ASTRewriteCorrectionPr
     }
 
     /**
+     * Returns whether the annotation declares a string literal equal to {@code pattern} in its
+     * {@code value} or {@code urlPatterns} member, i.e. whether this proposal can edit it.
+     * A pattern coming from a constant reference has no literal to rewrite.
+     *
+     * @param annotationNode the {@code @WebServlet}/{@code @WebFilter} annotation node, may be null
+     * @param pattern the URL pattern value to look for
+     */
+    public static boolean hasLiteral(ASTNode annotationNode, String pattern) {
+        if (annotationNode instanceof SingleMemberAnnotation single) {
+            return hasLiteral(single.getValue(), pattern);
+        }
+        if (annotationNode instanceof NormalAnnotation normal) {
+            for (Object obj : normal.values()) {
+                if (obj instanceof MemberValuePair pair) {
+                    String name = pair.getName().getIdentifier();
+                    if (("value".equals(name) || "urlPatterns".equals(name)) && hasLiteral(pair.getValue(), pattern)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasLiteral(Expression expr, String pattern) {
+        if (expr instanceof StringLiteral literal) {
+            return literal.getLiteralValue().equals(pattern);
+        }
+        if (expr instanceof ArrayInitializer arrayInit) {
+            for (Object elem : arrayInit.expressions()) {
+                if (elem instanceof StringLiteral literal && literal.getLiteralValue().equals(pattern)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
