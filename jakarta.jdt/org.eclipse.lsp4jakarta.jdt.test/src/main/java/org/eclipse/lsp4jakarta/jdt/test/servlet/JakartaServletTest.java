@@ -368,6 +368,105 @@ public class JakartaServletTest extends BaseJakartaTest {
         assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS);
     }
 
+    private static final String CANON_DIR = "src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/";
+
+    private String canonUri(String className) throws Exception {
+        IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
+        IFile javaFile = javaProject.getProject().getFile(new Path(CANON_DIR + className + ".java"));
+        return javaFile.getLocation().toFile().toURI().toString();
+    }
+
+    private static final String MISSING_SLASH_MSG = "URL pattern '%s' must start with a '/' (unless an extension mapping starting with '*.').";
+
+    @Test
+    public void MixedLiteralAndConstantServlet() throws Exception {
+        String uri = canonUri("MixedLiteralAndConstantServlet");
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        Diagnostic literal = d(5, 0, 89, String.format(MISSING_SLASH_MSG, "lit"),
+                               DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriMissingLeadingSlash", "lit");
+        Diagnostic constant = d(5, 0, 89, String.format(MISSING_SLASH_MSG, "const"),
+                                DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriMissingLeadingSlash", "const");
+
+        // "/a" is valid; the literal "lit" and the constant "const" are both reported
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, literal, constant);
+
+        // The fix on the literal edits only that literal, even though an invalid constant sits in the same annotation
+        CodeAction fix = ca(uri, "Add leading '/' to URL pattern", literal, te(5, 34, 5, 39, "\"/lit\""));
+        assertJavaCodeAction(createCodeActionParams(uri, literal), IJDT_UTILS, fix);
+
+        // The constant has no literal to rewrite
+        assertJavaCodeAction(createCodeActionParams(uri, constant), IJDT_UTILS);
+    }
+
+    @Test
+    public void SingleValueServlet() throws Exception {
+        String uri = canonUri("SingleValueServlet");
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        Diagnostic d = d(5, 0, 18, String.format(MISSING_SLASH_MSG, "foo"),
+                         DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriMissingLeadingSlash", "foo");
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d);
+
+        CodeAction fix = ca(uri, "Add leading '/' to URL pattern", d, te(5, 12, 5, 17, "\"/foo\""));
+        assertJavaCodeAction(createCodeActionParams(uri, d), IJDT_UTILS, fix);
+    }
+
+    @Test
+    public void ValueAttributeFilter() throws Exception {
+        String uri = canonUri("ValueAttributeFilter");
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        Diagnostic d = d(5, 0, 25, String.format(MISSING_SLASH_MSG, "bar"),
+                         DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriMissingLeadingSlash", "bar");
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d);
+
+        CodeAction fix = ca(uri, "Add leading '/' to URL pattern", d, te(5, 19, 5, 24, "\"/bar\""));
+        assertJavaCodeAction(createCodeActionParams(uri, d), IJDT_UTILS, fix);
+    }
+
+    @Test
+    public void MoreCanonicalizationServlet() throws Exception {
+        String uri = canonUri("MoreCanonicalizationServlet");
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        Diagnostic d1 = d(5, 0, 79, "URL pattern '/a%09b' must not contain control characters.",
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsControlChar", "/a%09b");
+        Diagnostic d2 = d(5, 0, 79, "URL pattern '/a%7Fb' must not contain control characters.",
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsControlChar", "/a%7Fb");
+        Diagnostic d3 = d(5, 0, 79, "URL pattern '/a%' contains an invalid percent-encoding sequence.",
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriInvalidPercentEncoding", "/a%");
+        Diagnostic d4 = d(5, 0, 79, "URL pattern '/.;/x' must not contain dot segments with parameters.",
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriDotSegmentWithParam", "/.;/x");
+        Diagnostic d5 = d(5, 0, 79, "URL pattern '/a/../../b' must not contain a leading dot-dot segment or resolve above the root.",
+                          DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriLeadingDotDotSegment", "/a/../../b");
+
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d1, d2, d3, d4, d5);
+    }
+
+    @Test
+    public void QuoteInPatternServlet() throws Exception {
+        String uri = canonUri("QuoteInPatternServlet");
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        Diagnostic d = d(5, 0, 40, String.format(MISSING_SLASH_MSG, "foo'bar"),
+                         DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriMissingLeadingSlash", "foo'bar");
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d);
+
+        CodeAction fix = ca(uri, "Add leading '/' to URL pattern", d, te(5, 28, 5, 37, "\"/foo'bar\""));
+        assertJavaCodeAction(createCodeActionParams(uri, d), IJDT_UTILS, fix);
+    }
+
     @Test
     public void ConstantReferenceServlet() throws Exception {
         IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
