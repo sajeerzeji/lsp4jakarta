@@ -320,7 +320,7 @@ public class JakartaServletTest extends BaseJakartaTest {
     }
 
     @Test
-    public void MissingLeadingSlashServlet() throws Exception {
+    public void missingLeadingSlashServlet() throws Exception {
         IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
         IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/MissingLeadingSlashServlet.java"));
         String uri = javaFile.getLocation().toFile().toURI().toString();
@@ -341,7 +341,7 @@ public class JakartaServletTest extends BaseJakartaTest {
     }
 
     @Test
-    public void QuickFixWithJsonPrimitiveData() throws Exception {
+    public void quickFixWithJsonPrimitiveData() throws Exception {
         IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
         IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/WildcardAndGlobFilter.java"));
         String uri = javaFile.getLocation().toFile().toURI().toString();
@@ -357,7 +357,7 @@ public class JakartaServletTest extends BaseJakartaTest {
     }
 
     @Test
-    public void ValidExtensionAndRootServlet() throws Exception {
+    public void validExtensionAndRootServlet() throws Exception {
         IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
         IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/ValidExtensionAndRootServlet.java"));
         String uri = javaFile.getLocation().toFile().toURI().toString();
@@ -379,7 +379,7 @@ public class JakartaServletTest extends BaseJakartaTest {
     private static final String MISSING_SLASH_MSG = "URL pattern '%s' must start with a '/' (unless an extension mapping starting with '*.').";
 
     @Test
-    public void MixedLiteralAndConstantServlet() throws Exception {
+    public void mixedLiteralAndConstantServlet() throws Exception {
         String uri = canonUri("MixedLiteralAndConstantServlet");
 
         JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
@@ -402,7 +402,7 @@ public class JakartaServletTest extends BaseJakartaTest {
     }
 
     @Test
-    public void SingleValueServlet() throws Exception {
+    public void singleValueServlet() throws Exception {
         String uri = canonUri("SingleValueServlet");
 
         JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
@@ -417,7 +417,7 @@ public class JakartaServletTest extends BaseJakartaTest {
     }
 
     @Test
-    public void ValueAttributeFilter() throws Exception {
+    public void valueAttributeFilter() throws Exception {
         String uri = canonUri("ValueAttributeFilter");
 
         JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
@@ -432,7 +432,7 @@ public class JakartaServletTest extends BaseJakartaTest {
     }
 
     @Test
-    public void MoreCanonicalizationServlet() throws Exception {
+    public void moreCanonicalizationServlet() throws Exception {
         String uri = canonUri("MoreCanonicalizationServlet");
 
         JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
@@ -453,7 +453,7 @@ public class JakartaServletTest extends BaseJakartaTest {
     }
 
     @Test
-    public void QuoteInPatternServlet() throws Exception {
+    public void quoteInPatternServlet() throws Exception {
         String uri = canonUri("QuoteInPatternServlet");
 
         JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
@@ -468,7 +468,45 @@ public class JakartaServletTest extends BaseJakartaTest {
     }
 
     @Test
-    public void ConstantReferenceServlet() throws Exception {
+    public void emptyAfterFixServlet() throws Exception {
+        String uri = canonUri("EmptyAfterFixServlet");
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        Diagnostic noSlashFragment = d(5, 0, 41, String.format(MISSING_SLASH_MSG, "#x"),
+                                       DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriMissingLeadingSlash", "#x");
+        Diagnostic fragment = d(5, 0, 41, "URL pattern '#x' must not contain a fragment identifier ('#').",
+                                DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsFragment", "#x");
+        Diagnostic noSlashQuery = d(5, 0, 41, String.format(MISSING_SLASH_MSG, "?y"),
+                                    DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriMissingLeadingSlash", "?y");
+        Diagnostic query = d(5, 0, 41, "URL pattern '?y' must not contain a query string ('?').",
+                             DiagnosticSeverity.Error, "jakarta-servlet", "ServletUriContainsQueryString", "?y");
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, noSlashFragment, fragment, noSlashQuery, query);
+
+        // Stripping would leave an empty string, which silently becomes a context-root mapping
+        assertJavaCodeAction(createCodeActionParams(uri, fragment), IJDT_UTILS);
+        assertJavaCodeAction(createCodeActionParams(uri, query), IJDT_UTILS);
+    }
+
+    @Test
+    public void globInMiddleServlet() throws Exception {
+        String uri = canonUri("GlobInMiddleServlet");
+
+        JakartaJavaDiagnosticsParams diagnosticsParams = new JakartaJavaDiagnosticsParams();
+        diagnosticsParams.setUris(Arrays.asList(uri));
+
+        Diagnostic d = d(5, 0, 34,
+                         "URL pattern '/**/x' uses '/**', which in Jakarta Servlet is treated as an exact literal path match and does not match sub-paths.",
+                         DiagnosticSeverity.Warning, "jakarta-servlet", "ServletUriSpringGlobPattern", "/**/x");
+        assertJavaDiagnostics(diagnosticsParams, IJDT_UTILS, d);
+
+        // Only a trailing '/**' can be replaced, so the fix would change nothing
+        assertJavaCodeAction(createCodeActionParams(uri, d), IJDT_UTILS);
+    }
+
+    @Test
+    public void constantReferenceServlet() throws Exception {
         IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
         IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/ConstantReferenceServlet.java"));
         String uri = javaFile.getLocation().toFile().toURI().toString();
@@ -489,7 +527,7 @@ public class JakartaServletTest extends BaseJakartaTest {
     }
 
     @Test
-    public void FragmentAndQueryServlet() throws Exception {
+    public void fragmentAndQueryServlet() throws Exception {
         IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
         IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/FragmentAndQueryServlet.java"));
         String uri = javaFile.getLocation().toFile().toURI().toString();
@@ -518,7 +556,7 @@ public class JakartaServletTest extends BaseJakartaTest {
     }
 
     @Test
-    public void EncodedAndBackslashServlet() throws Exception {
+    public void encodedAndBackslashServlet() throws Exception {
         IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
         IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/EncodedAndBackslashServlet.java"));
         String uri = javaFile.getLocation().toFile().toURI().toString();
@@ -540,7 +578,7 @@ public class JakartaServletTest extends BaseJakartaTest {
     }
 
     @Test
-    public void DotSegmentsAndTraversalServlet() throws Exception {
+    public void dotSegmentsAndTraversalServlet() throws Exception {
         IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
         IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/DotSegmentsAndTraversalServlet.java"));
         String uri = javaFile.getLocation().toFile().toURI().toString();
@@ -565,7 +603,7 @@ public class JakartaServletTest extends BaseJakartaTest {
     }
 
     @Test
-    public void ControlCharAndEncodingServlet() throws Exception {
+    public void controlCharAndEncodingServlet() throws Exception {
         IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
         IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/ControlCharAndEncodingServlet.java"));
         String uri = javaFile.getLocation().toFile().toURI().toString();
@@ -590,7 +628,7 @@ public class JakartaServletTest extends BaseJakartaTest {
     }
 
     @Test
-    public void WildcardAndGlobFilter() throws Exception {
+    public void wildcardAndGlobFilter() throws Exception {
         IJavaProject javaProject = loadJavaProject("jakarta-sample", "");
         IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/io/openliberty/sample/jakarta/servlet/canonicalization/WildcardAndGlobFilter.java"));
         String uri = javaFile.getLocation().toFile().toURI().toString();

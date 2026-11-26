@@ -31,6 +31,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.ArrayInitializer;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.MemberValuePair;
 import org.eclipse.jdt.core.dom.NodeFinder;
@@ -53,6 +54,8 @@ public class ServletUriCanonicalizationValidator {
 
     private static final Pattern INVALID_PERCENT_PATTERN = Pattern.compile("%(?![0-9A-Fa-f]{2})");
     private static final Pattern ENCODED_DOT_PATTERN = Pattern.compile("(?i)(%2e)");
+
+    private ServletUriCanonicalizationValidator() {}
 
     /**
      * Validates URL patterns declared on {@code @WebServlet} or {@code @WebFilter} annotations.
@@ -138,7 +141,11 @@ public class ServletUriCanonicalizationValidator {
         if (range == null || range.getOffset() < 0) {
             return null;
         }
-        ASTNode node = NodeFinder.perform(context.getASTRoot(), range.getOffset(), range.getLength());
+        CompilationUnit root = context.getASTRoot();
+        if (root == null) {
+            return null;
+        }
+        ASTNode node = NodeFinder.perform(root, range.getOffset(), range.getLength());
         while (node != null && !(node instanceof Annotation)) {
             node = node.getParent();
         }
@@ -269,15 +276,15 @@ public class ServletUriCanonicalizationValidator {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
             int i = 0;
             while (i < pattern.length()) {
-                char c = pattern.charAt(i);
-                if (c == '%') {
+                int cp = pattern.codePointAt(i);
+                if (cp == '%') {
                     int b = Integer.parseInt(pattern.substring(i + 1, i + 3), 16);
                     buffer.write(b);
                     i += 3;
                 } else {
-                    byte[] charBytes = String.valueOf(c).getBytes(StandardCharsets.UTF_8);
+                    byte[] charBytes = new String(Character.toChars(cp)).getBytes(StandardCharsets.UTF_8);
                     buffer.write(charBytes, 0, charBytes.length);
-                    i++;
+                    i += Character.charCount(cp);
                 }
             }
             byte[] bytes = buffer.toByteArray();
@@ -317,11 +324,11 @@ public class ServletUriCanonicalizationValidator {
                                          String pattern, Range range, List<Diagnostic> diagnostics) {
         // Strip fragment and query before segment parsing
         String cleanPath = pattern;
-        int fragmentIdx = cleanPath.indexOf('#');
+        int fragmentIdx = cleanPath.indexOf(Constants.HASH);
         if (fragmentIdx != -1) {
             cleanPath = cleanPath.substring(0, fragmentIdx);
         }
-        int queryIdx = cleanPath.indexOf('?');
+        int queryIdx = cleanPath.indexOf(Constants.QUESTION_MARK);
         if (queryIdx != -1) {
             cleanPath = cleanPath.substring(0, queryIdx);
         }
@@ -349,9 +356,9 @@ public class ServletUriCanonicalizationValidator {
             }
 
             // §3.5.2 Rejecting Suspicious Sequences: Dot segments with parameters (/..;/ or /.;/)
-            int semicolonIdx = seg.indexOf(';');
+            int semicolonIdx = seg.indexOf(Constants.SEMICOLON);
             String segBeforeParam = semicolonIdx != -1 ? seg.substring(0, semicolonIdx) : seg;
-            String segBeforeParamDecoded = segBeforeParam.replaceAll("(?i)%2e", ".");
+            String segBeforeParamDecoded = ENCODED_DOT_PATTERN.matcher(segBeforeParam).replaceAll(".");
 
             if (semicolonIdx != -1) {
                 if ((".".equals(segBeforeParam) || "..".equals(segBeforeParam)

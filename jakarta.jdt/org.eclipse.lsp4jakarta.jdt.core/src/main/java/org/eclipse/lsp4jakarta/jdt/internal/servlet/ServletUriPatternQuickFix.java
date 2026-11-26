@@ -73,6 +73,15 @@ public class ServletUriPatternQuickFix implements IJavaCodeActionParticipant {
             if (!ServletPatternTransformationProposal.hasLiteral(context.getCoveredNode(), pattern)) {
                 return Collections.emptyList();
             }
+            // An unchanged result is a no-op, and an empty one would silently turn the pattern into a
+            // context-root mapping, so no fix is offered in either case
+            UnaryOperator<String> transformer = getTransformer(id.getId());
+            if (transformer != null) {
+                String result = transformer.apply(pattern);
+                if (result.isEmpty() || result.equals(pattern)) {
+                    return Collections.emptyList();
+                }
+            }
             extendedData = Collections.singletonMap(DATA_PATTERN, pattern);
         }
 
